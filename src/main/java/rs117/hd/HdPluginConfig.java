@@ -598,4 +598,9 @@ public interface HdPluginConfig extends Config
 	default boolean loadingClearCache() {
 		return false;
 	}
+
+	/*====== Internal settings ======*/
+	@ConfigItem(keyName = "modelCaching", name = "", description = "")
+	default boolean disableModelCaching() { return false; }
+
 }

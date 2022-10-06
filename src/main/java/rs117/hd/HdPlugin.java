@@ -27,6 +27,7 @@ package rs117.hd;
 
 import com.google.common.primitives.Ints;
 import com.google.inject.Provides;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
@@ -127,6 +128,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 	private ClientThread clientThread;
 
 	@Inject
+	@Getter
 	private HdPluginConfig config;
 
 	@Inject
@@ -154,6 +156,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 	private ProceduralGenerator proceduralGenerator;
 
 	@Inject
+	@Getter
 	private ConfigManager configManager;
 
 	@Inject
@@ -419,6 +422,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		configWinterTheme = config.winterTheme();
 		configMaxDynamicLights = config.maxDynamicLights().getValue();
 
+		WarningMessage.setup(this);
 		clientThread.invoke(() ->
 		{
 			try
