@@ -68,6 +68,7 @@ import rs117.hd.utils.*;
 import rs117.hd.utils.buffer.GLBuffer;
 import rs117.hd.utils.buffer.GpuFloatBuffer;
 import rs117.hd.utils.buffer.GpuIntBuffer;
+import rs117.hd.utils.error.ErrorReporting;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -407,6 +408,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 	@Override
 	protected void startUp()
 	{
+
 		configGroundTextures = config.groundTextures();
 		configGroundBlending = config.groundBlending();
 		configModelTextures = config.objectTextures();
@@ -461,16 +463,16 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 				GLCapabilities caps = GL.getCapabilities();
 				if (computeMode == ComputeMode.OPENGL)
 				{
-					if (!caps.OpenGL43)
+					if (caps.OpenGL43)
 					{
-						throw new RuntimeException("OpenGL 4.3 is required but not available");
+						new ErrorReporting(new RuntimeException("OpenGL 4.3 is required but not available"));
 					}
 				}
 				else
 				{
-					if (!caps.OpenGL31)
+					if (caps.OpenGL31)
 					{
-						throw new RuntimeException("OpenGL 3.1 is required but not available");
+						new RuntimeException(new RuntimeException("OpenGL 3.1 is required but not available"));
 					}
 				}
 
@@ -553,6 +555,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 			}
 			catch (Throwable e)
 			{
+				new ErrorReporting(e);
 				log.error("Error starting HD plugin", e);
 				stopPlugin();
 			}
@@ -636,6 +639,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 			}
 			catch (PluginInstantiationException ex)
 			{
+				new ErrorReporting(ex);
 				log.error("error stopping plugin", ex);
 			}
 		});
