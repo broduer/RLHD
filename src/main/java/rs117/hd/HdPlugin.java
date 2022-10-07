@@ -422,7 +422,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		configWinterTheme = config.winterTheme();
 		configMaxDynamicLights = config.maxDynamicLights().getValue();
 
-		WarningMessage.setup(this);
+		new WarningMessage().setup(this);
 		clientThread.invoke(() ->
 		{
 			try

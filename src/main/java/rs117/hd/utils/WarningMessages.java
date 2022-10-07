@@ -13,18 +13,20 @@ public enum WarningMessages {
             "but it's not enabled by default.<br>If you are willing to risk potential crashes or visual artifacts, " +
             "you can enable the cache from the Experimental section of 117HD's settings panel.<br>" +
             "If you run into any issues, please report them in the 117HD Discord server." +
-            "</html>", p -> p.configTrue(HdPluginConfig::disableModelCaching));
+            "</html>", p -> p.configTrue(HdPluginConfig::disableModelCaching)),
 
-    public String message;
+    MODEL_CACHE_OYHE("<html>" + "ANOTHER COOL MESSAGE" + "</html>", p -> p.configTrue(HdPluginConfig::disableModelCaching));
+
+    public String content;
     public Function<HdPluginConfig, Boolean> condition;
     public String settingKey = "";
 
     WarningMessages(String message, Consumer<Builder> consumer) {
-        this.message = message;
+        this.content = message;
         Builder builder = new Builder();
         consumer.accept(builder);
         this.condition = builder.condition;
-        this.settingKey = "displayed" + name();
+        this.settingKey = "WARNING_" + name() + "_SEEN";
     }
 
     @Setter
