@@ -119,6 +119,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 	private static final int[] eightIntWrite = new int[8];
 
 	@Inject
+	@Getter
 	private Client client;
 	
 	@Inject

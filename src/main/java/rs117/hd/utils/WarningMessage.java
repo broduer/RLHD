@@ -26,6 +26,7 @@
 package rs117.hd.utils;
 
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Constants;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.LinkBrowser;
@@ -36,18 +37,17 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+
+import static rs117.hd.utils.ResourcePath.path;
 
 @Slf4j
 public
 class WarningMessage {
 
     private HdPlugin plugin;
-
-    private final JPanel bottomButtons = new JPanel();
-    private final Font font = new Font(Font.DIALOG, Font.PLAIN, 12);
-    private final JPanel rightColumn = new JPanel();
     private final String CONFIG_GROUP = "hd";
 
     public static List<WarningMessages> messages = new LinkedList<>();
@@ -74,116 +74,77 @@ class WarningMessage {
 
     public void open()
     {
-        JDialog dialog = new JDialog();
+        SwingUtilities.invokeLater(() -> {
+            final int maxWidth = 400;
+            final int maxHeight = 360;
 
-        try
-        {
-            BufferedImage logo = ImageUtil.loadImageResource(HdPlugin.class, "logo.png");
-            dialog.setIconImage(logo);
+            JFrame frame = new JFrame("117HD Update");
+            frame.setMinimumSize(new Dimension(400, 200));
+            JPanel framePanel = new JPanel();
+            framePanel.setLayout(new BoxLayout(framePanel, BoxLayout.PAGE_AXIS));
 
-            JLabel runelite = new JLabel();
-            runelite.setIcon(new ImageIcon(logo));
-            runelite.setAlignmentX(Component.CENTER_ALIGNMENT);
-            runelite.setBackground(ColorScheme.DARK_GRAY_COLOR);
-            runelite.setOpaque(true);
-            rightColumn.add(runelite);
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-        }
+            JPanel mainPanel = new JPanel(new BorderLayout());
+            mainPanel.setBorder(BorderFactory.createEmptyBorder(16, 0, 8, 8));
 
-
-        dialog.setTitle("117HD Update");
-        dialog.setLayout(new BorderLayout());
-
-        JPanel pane = (JPanel) dialog.getContentPane();
-        pane.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        pane.putClientProperty(SubstanceSynapse.COLORIZATION_FACTOR, 1.0);
-
-        JPanel leftPane = new JPanel();
-        leftPane.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        leftPane.setLayout(new BorderLayout());
-
-
-        StringBuilder text = new StringBuilder();
-        for (WarningMessages message : messages) {
-            text.append(message.content);
-            text.append(System.lineSeparator());
-        }
-
-        leftPane.setPreferredSize(new Dimension(400, 200));
-        JLabel textArea = new JLabel(text.toString());
-        textArea.setFont(font);
-        textArea.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        textArea.setForeground(Color.LIGHT_GRAY);
-        textArea.setBorder(new EmptyBorder(10, 10, 10, 10));
-        textArea.setOpaque(false);
-        textArea.setVerticalAlignment(JLabel.TOP);
-
-        leftPane.add(textArea);
-
-        pane.add(leftPane, BorderLayout.CENTER);
-
-        rightColumn.setLayout(new BoxLayout(rightColumn, BoxLayout.Y_AXIS));
-        rightColumn.setBackground(ColorScheme.DARK_GRAY_COLOR);
-        rightColumn.setMaximumSize(new Dimension(200, Integer.MAX_VALUE));
-
-        rightColumn.add(addButton("Got it", () -> {
-            messages.forEach(messages -> {
-                plugin.getConfigManager().setConfiguration(CONFIG_GROUP,messages.settingKey,true);
-            });
-            dialog.setVisible(false);
-        }));
-
-        rightColumn.add(addButton("Remind me later", () -> dialog.setVisible(false)));
-        rightColumn.add(addButton("Discord", () -> LinkBrowser.open("https://discord.gg/U4p6ChjgSE")));
-
-        pane.add(rightColumn, BorderLayout.EAST);
-
-
-
-        dialog.pack();
-        dialog.setLocationRelativeTo(null);
-        dialog.setVisible(true);
-
-
-    }
-
-    public JButton addButton(String message, Runnable action)
-    {
-        JButton button = new JButton(message);
-        button.addActionListener(e -> action.run());
-        button.setFont(font);
-        button.setBackground(ColorScheme.DARK_GRAY_COLOR);
-        button.setForeground(Color.LIGHT_GRAY);
-        button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(1, 0, 0, 0, ColorScheme.DARK_GRAY_COLOR.brighter()),
-                new EmptyBorder(4, 4, 4, 4)
-        ));
-        button.setAlignmentX(Component.CENTER_ALIGNMENT);
-        button.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-        button.setFocusPainted(false);
-        button.addChangeListener(ev ->
-        {
-            if (button.getModel().isPressed())
-            {
-                button.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+            try {
+                BufferedImage logoImage = path(HdPlugin.class, "logo.png").loadImage();
+                frame.setIconImage(logoImage);
+                Image logoScaled = logoImage.getScaledInstance(96, -1, Image.SCALE_SMOOTH);
+                JLabel logoLabel = new JLabel(new ImageIcon(logoScaled));
+                logoLabel.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
+                mainPanel.add(logoLabel, BorderLayout.LINE_START);
+            } catch (IOException ex) {
+                log.error("Unable to load HD logo: ", ex);
             }
-            else if (button.getModel().isRollover())
-            {
-                button.setBackground(ColorScheme.DARK_GRAY_HOVER_COLOR);
+
+            StringBuilder text = new StringBuilder();
+            for (WarningMessages message : messages) {
+                text.append(message.content);
+                text.append(System.lineSeparator());
             }
-            else
-            {
-                button.setBackground(ColorScheme.DARK_GRAY_COLOR);
-            }
+
+            System.out.println(text);
+
+            // TODO: this is one way to make words wrap, but it forces a certain width
+//			String html = String.format("<html><body style=\"width: %dpx\">%s</body></html>", maxWidth - 150, message);
+            String html = String.format("<html>%s</html>", text);
+            JLabel messageLabel = new JLabel(html);
+            messageLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
+            JScrollPane scrollPane = new JScrollPane(messageLabel);
+            scrollPane.setOpaque(false);
+            scrollPane.getViewport().setOpaque(false);
+            scrollPane.setPreferredSize(new Dimension(
+                    Math.min(scrollPane.getPreferredSize().width, maxWidth),
+                    Math.min(scrollPane.getPreferredSize().height, Math.min(messageLabel.getPreferredSize().height, maxHeight))
+            ));
+            scrollPane.setMaximumSize(new Dimension(maxWidth, maxHeight));
+            scrollPane.setPreferredSize(new Dimension(50, 50));
+            scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+            scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            mainPanel.add(scrollPane, BorderLayout.CENTER);
+
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
+
+            buttonPanel.add(new JButton("dfd"));
+            buttonPanel.add(new JButton("dfd1"));
+
+            framePanel.add(mainPanel);
+            framePanel.add(buttonPanel);
+
+            frame.setContentPane(framePanel);
+            frame.pack();
+            frame.setLocationRelativeTo(plugin.getClient().getCanvas());
+            Point point = frame.getLocation();
+            frame.setLocation(point.x, point.y + (Constants.GAME_FIXED_HEIGHT - plugin.getClient().getCanvasHeight()) / 2 - 10);
+            frame.setAutoRequestFocus(true);
+
+            JFrame runeLiteWindow = (JFrame) SwingUtilities.getWindowAncestor(plugin.getClient().getCanvas());
+            if (runeLiteWindow.isAlwaysOnTop())
+                frame.setAlwaysOnTop(true);
+
+            frame.setVisible(true);
         });
-
-        bottomButtons.add(button);
-        bottomButtons.revalidate();
-
-        return button;
     }
-
 
 
 
