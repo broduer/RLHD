@@ -87,6 +87,7 @@ import java.util.Map;
 
 import static org.jocl.CL.*;
 import static org.lwjgl.opengl.GL43C.*;
+import static rs117.hd.HdPluginConfig.KEY_REDUCE_OVER_EXPOSURE;
 import static rs117.hd.HdPluginConfig.KEY_WINTER_THEME;
 import static rs117.hd.utils.ResourcePath.path;
 
@@ -380,6 +381,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 	public boolean configExpandShadowDraw = false;
 	public boolean configHdInfernalTexture = true;
 	public boolean configWinterTheme = true;
+	public boolean configReduceOverExposure = false;
 	public int configMaxDynamicLights;
 
 	public int[] camTarget = new int[3];
@@ -417,6 +419,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		configExpandShadowDraw = config.expandShadowDraw();
 		configHdInfernalTexture = config.hdInfernalTexture();
 		configWinterTheme = config.winterTheme();
+		configReduceOverExposure = config.reduceOverExposure();
 		configMaxDynamicLights = config.maxDynamicLights().getValue();
 
 		clientThread.invoke(() ->
@@ -1153,7 +1156,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 
 	private void initLightsUniformBuffer()
 	{
-		lightsUniformBuf = BufferUtils.createByteBuffer(configMaxDynamicLights * 8 * SCALAR_BYTES);
+		// Allowing a buffer size of zero causes Apple M1/M2 to revert to software rendering
+		lightsUniformBuf = BufferUtils.createByteBuffer(Math.max(1, configMaxDynamicLights) * 8 * SCALAR_BYTES);
 		updateBuffer(lightsUniformBuffer, GL_UNIFORM_BUFFER, lightsUniformBuf, GL_DYNAMIC_DRAW, CL_MEM_READ_ONLY);
 	}
 
@@ -2248,11 +2252,13 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 			case "groundTextures":
 			case "objectTextures":
 			case "tzhaarHD":
+			case KEY_REDUCE_OVER_EXPOSURE:
 				configGroundBlending = config.groundBlending();
 				configGroundTextures = config.groundTextures();
 				configModelTextures = config.objectTextures();
 				configTzhaarHD = config.tzhaarHD();
 				configWinterTheme = config.winterTheme();
+				configReduceOverExposure = config.reduceOverExposure();
 				clientThread.invoke(() -> {
 					modelPusher.clearModelCache();
 					reloadScene();
