@@ -29,7 +29,9 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Texture;
 import net.runelite.api.TextureProvider;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.game.SpriteManager;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.EXTTextureFilterAnisotropic;
 import org.lwjgl.opengl.GL;
@@ -72,6 +74,9 @@ public class TextureManager
 
 	@Inject
 	private Client client;
+
+	@Inject
+	private SpriteManager spriteManager;
 
 	@Inject
 	private ClientThread clientThread;
@@ -125,16 +130,11 @@ public class TextureManager
             minimapMaskTexture = glGenTextures();
             glBindTexture(GL_TEXTURE_2D, minimapMaskTexture);
 
-            BufferedImage image;
-            ResourcePath path = path("/home/Desktop/1178.png");
-            try {
-                image = path.loadImage();
-            } catch (Exception ex) {
-                log.debug("Failed to load texture: {}", path, ex);
-                throw new RuntimeException("Error");
-            }
+			BufferedImage image = spriteManager.getSprite(1178,0);
+
             int width = image.getWidth();
             int height = image.getHeight();
+
             BufferedImage intImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             {
                 Graphics2D g = (Graphics2D) intImage.getGraphics();

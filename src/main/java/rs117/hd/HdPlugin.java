@@ -1467,11 +1467,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		checkGLErrors();
 	}
 
-    int transparencyColor = Color.decode("#ff00ff").getRGB();
     private void drawTile(Tile tile0, int tx, int ty, int px0, int py0, int px1, int py1)
     {
-//        if (true) throw new RuntimeException("I want my transparency");
-//        client.getRasterizer().fillRectangle(px0, py0, px1 - px0, py1 - py0, Color.decode("#ffffff").getRGB());
+        client.getRasterizer().fillRectangle(px0, py0, px1 - px0, py1 - py0, Color.decode("ff00ff").getRGB());
     }
 
 	@Override
