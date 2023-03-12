@@ -24,7 +24,9 @@
  */
 package rs117.hd.scene;
 
+import java.awt.Graphics2D;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Client;
 import net.runelite.api.Texture;
 import net.runelite.api.TextureProvider;
 import net.runelite.client.callback.ClientThread;
@@ -37,16 +39,12 @@ import rs117.hd.data.materials.Material;
 import rs117.hd.utils.Env;
 import rs117.hd.utils.ResourcePath;
 
-import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -73,15 +71,17 @@ public class TextureManager
 	private HdPluginConfig config;
 
 	@Inject
+	private Client client;
+
+	@Inject
 	private ClientThread clientThread;
 
-	private int maskTextureFixed;
-	private int maskTextureResized;
-
 	private int textureArray;
-	private int textureSize;
-	private int[] materialOrdinalToTextureIndex;
-	private int[] materialReplacements;
+    private int textureSize;
+    private int[] materialOrdinalToTextureIndex;
+    private int[] materialReplacements;
+    private int minimapMaskTexture;
+    private int currentlyLoadedMinimapMask;
 
 	// Temporary buffers for texture loading
 	private IntBuffer pixelBuffer;
@@ -114,6 +114,54 @@ public class TextureManager
 
 	public void ensureTexturesLoaded(TextureProvider textureProvider)
 	{
+        int activeMinimapMaskSprite = 2;
+        if (activeMinimapMaskSprite != currentlyLoadedMinimapMask) {
+            if (minimapMaskTexture != 0) {
+                glDeleteTextures(minimapMaskTexture);
+                minimapMaskTexture = 0;
+            }
+
+            glActiveTexture(TEXTURE_UNIT_MINIMAP_MASK);
+            minimapMaskTexture = glGenTextures();
+            glBindTexture(GL_TEXTURE_2D, minimapMaskTexture);
+
+            BufferedImage image;
+            ResourcePath path = path("/home/Desktop/1178.png");
+            try {
+                image = path.loadImage();
+            } catch (Exception ex) {
+                log.debug("Failed to load texture: {}", path, ex);
+                throw new RuntimeException("Error");
+            }
+            int width = image.getWidth();
+            int height = image.getHeight();
+            BufferedImage intImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            {
+                Graphics2D g = (Graphics2D) intImage.getGraphics();
+                g.drawImage(image, 0, 0, null);
+            }
+
+            int[] pixels = ((DataBufferInt) intImage.getRaster().getDataBuffer()).getData();
+            IntBuffer pixelBuffer = BufferUtils.createIntBuffer(width * height);
+            pixelBuffer.put(pixels).flip();
+
+            // Go from TYPE_4BYTE_ABGR in the BufferedImage to RGBA
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
+                GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixelBuffer);
+            plugin.checkGLErrors();
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            plugin.checkGLErrors();
+
+            currentlyLoadedMinimapMask = activeMinimapMaskSprite;
+
+            // Reset
+            glActiveTexture(TEXTURE_UNIT_UI);
+        }
+
 		if (textureArray != 0)
 		{
 			return;
@@ -318,34 +366,6 @@ public class TextureManager
 
 		plugin.updateMaterialUniformBuffer(textureAnimations);
 		plugin.updateWaterTypeUniformBuffer();
-
-		maskTextureFixed = glGenTextures();
-		BufferedImage image = null;
-		try {
-			image = ImageIO.read(new File("C:\\Users\\Administrator\\Desktop\\RSPS\\OsrsQuery\\repository\\oldschool\\212\\sprites\\pink\\1178.png"));
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		glBindTexture(GL_TEXTURE_2D, maskTextureFixed);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-
-		int width = image.getWidth();
-
-		int height = image.getHeight();
-		int[] pixels = image.getRGB(0, 0, width, height, null, 0, width);
-
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
-		plugin.checkGLErrors();
-		glActiveTexture(TEXTURE_UNIT_MINIMAP_MASK);
-		System.out.println("dfsdfsdfsdfsdsdf");
-		glBindTexture(GL_TEXTURE_2D, maskTextureFixed);
-		glUseProgram(plugin.glProgram);
-
-		glActiveTexture(TEXTURE_UNIT_UI);
 	}
 
 	private BufferedImage loadTextureImage(String textureName)
@@ -411,16 +431,17 @@ public class TextureManager
 	{
 		clientThread.invoke(() ->
 		{
-			glDeleteTextures(textureArray);
-			textureArray = 0;
+            if (textureArray != 0) {
+                glDeleteTextures(textureArray);
+                textureArray = 0;
+            }
 
-			glDeleteTextures(maskTextureFixed);
-			maskTextureFixed = 0;
-
-			glDeleteTextures(maskTextureResized);
-			maskTextureResized = 0;
-
-		});
+            currentlyLoadedMinimapMask = 0;
+            if (minimapMaskTexture != 0) {
+                glDeleteTextures(minimapMaskTexture);
+                minimapMaskTexture = 0;
+            }
+        });
 	}
 
 	/**

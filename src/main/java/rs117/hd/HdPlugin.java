@@ -59,8 +59,6 @@ import org.lwjgl.opengl.GLCapabilities;
 import org.lwjgl.opengl.GLUtil;
 import org.lwjgl.system.Callback;
 import org.lwjgl.system.Configuration;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.MemoryUtil;
 import rs117.hd.config.*;
 import rs117.hd.data.WaterType;
 import rs117.hd.data.materials.Material;
@@ -83,7 +81,6 @@ import rs117.hd.utils.buffer.GpuFloatBuffer;
 import rs117.hd.utils.buffer.GpuIntBuffer;
 
 import javax.annotation.Nonnull;
-import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.swing.*;
@@ -91,8 +88,6 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
-import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -123,7 +118,6 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 	public static final int TEXTURE_UNIT_UI = GL_TEXTURE0; // default state
 	public static final int TEXTURE_UNIT_GAME = GL_TEXTURE1;
 	public static final int TEXTURE_UNIT_SHADOW_MAP = GL_TEXTURE2;
-
 	public static final int TEXTURE_UNIT_MINIMAP_MASK = GL_TEXTURE3;
 
 	// This is the maximum number of triangles the compute shaders support
@@ -237,7 +231,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		.getPathOrDefault(ENV_SHADER_PATH, () -> path(HdPlugin.class))
 		.chroot();
 
-	public int glProgram;
+	private int glProgram;
 	private int glComputeProgram;
 	private int glSmallComputeProgram;
 	private int glUnorderedComputeProgram;
@@ -302,12 +296,13 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 	private int viewportOffsetY;
 
 	// Uniforms
+    private int uniViewport;
+    private int uniHdMinimapRenderPass;
 	private int uniColorBlindnessIntensity;
 	private int uniUiColorBlindnessIntensity;
 	private int uniUseFog;
 	private int uniFogColor;
 	private int uniFogDepth;
-	public int uniMaskMinimap;
 	private int uniDrawDistance;
 	private int uniWaterColorLight;
 	private int uniWaterColorMid;
@@ -342,13 +337,13 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 
 	private int uniProjectionMatrix;
 	private int uniLightProjectionMatrix;
-	private int uniShadowMap;
-	public int uniMaskTexture;
-	private int uniUiTexture;
+    private int uniUiTexture;
+    private int uniTextureArray;
+    private int uniShadowMap;
+    private int uniMinimapMask;
 	private int uniTexSourceDimensions;
 	private int uniTexTargetDimensions;
 	private int uniUiAlphaOverlay;
-	private int uniTextureArray;
 	private int uniElapsedTime;
 
 	private int uniBlockSmall;
@@ -604,9 +599,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		FileWatcher.destroy();
 		developerTools.deactivate();
 		lightManager.shutDown();
-		client.setMinimapTileDrawer(null);
 		clientThread.invoke(() ->
 		{
+            client.setMinimapTileDrawer(null);
 			client.setGpu(false);
 			client.setDrawCallbacks(null);
 			client.setUnlockedFps(false);
@@ -683,23 +678,6 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 	HdPluginConfig provideConfig(ConfigManager configManager)
 	{
 		return configManager.getConfig(HdPluginConfig.class);
-	}
-
-
-	private final int[] tmpScreenX = new int[6];
-	private final int[] tmpScreenY = new int[6];
-
-	static int blend(int var0, int var1)
-	{
-		var1 = (var0 & 127) * var1 >> 7;
-		var1 = Math.max(2, var1);
-		var1 = Math.min(126, var1);
-		return (var0 & 0xFF80) + var1;
-	}
-
-	private void drawTile(Tile tile0, int tx, int ty, int px0, int py0, int px1, int py1)
-	{
-		client.getRasterizer().fillRectangle(px0, py0, px1 - px0, py1 - py0, Color.decode("ff00ff").getRGB());
 	}
 
 	private String generateFetchCases(String array, int from, int to)
@@ -818,8 +796,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		// Bind texture samplers before validating, else the validation fails
 		glUseProgram(glProgram);
 		glUniform1i(uniTextureArray, 1);
-		glUniform1i(uniShadowMap, 2);
-		glUniform1i(uniMaskTexture, 3);
+		glUniform1i(uniShadowMap,    2);
+		glUniform1i(uniMinimapMask,  3);
 		// Validate program
 		glValidateProgram(glProgram);
 		if (glGetProgrami(glProgram, GL_VALIDATE_STATUS) == GL_FALSE)
@@ -839,16 +817,17 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 
 	private void initUniforms()
 	{
+        uniViewport = glGetUniformLocation(glProgram, "viewport");
+        uniHdMinimapRenderPass = glGetUniformLocation(glProgram, "hdMinimapRenderPass");
 		uniProjectionMatrix = glGetUniformLocation(glProgram, "projectionMatrix");
 		uniLightProjectionMatrix = glGetUniformLocation(glProgram, "lightProjectionMatrix");
 		uniShadowMap = glGetUniformLocation(glProgram, "shadowMap");
-		uniMaskTexture = glGetUniformLocation(glProgram, "maskTexture");
+		uniMinimapMask = glGetUniformLocation(glProgram, "minimapMask");
 		uniSaturation = glGetUniformLocation(glProgram, "saturation");
 		uniContrast = glGetUniformLocation(glProgram, "contrast");
 		uniUseFog = glGetUniformLocation(glProgram, "useFog");
 		uniFogColor = glGetUniformLocation(glProgram, "fogColor");
 		uniFogDepth = glGetUniformLocation(glProgram, "fogDepth");
-		uniMaskMinimap = glGetUniformLocation(glProgram, "maskMinimap");
 		uniWaterColorLight = glGetUniformLocation(glProgram, "waterColorLight");
 		uniWaterColorMid = glGetUniformLocation(glProgram, "waterColorMid");
 		uniWaterColorDark = glGetUniformLocation(glProgram, "waterColorDark");
@@ -1488,6 +1467,13 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		checkGLErrors();
 	}
 
+    int transparencyColor = Color.decode("#ff00ff").getRGB();
+    private void drawTile(Tile tile0, int tx, int ty, int px0, int py0, int px1, int py1)
+    {
+//        if (true) throw new RuntimeException("I want my transparency");
+//        client.getRasterizer().fillRectangle(px0, py0, px1 - px0, py1 - py0, Color.decode("#ffffff").getRGB());
+    }
+
 	@Override
 	public void drawScenePaint(int orientation, int pitchSin, int pitchCos, int yawSin, int yawCos, int x, int y, int z,
 		SceneTilePaint paint, int tileZ, int tileX, int tileY,
@@ -1815,9 +1801,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 				glUseProgram(0);
 			}
 
-			glDpiAwareViewport(renderWidthOff, renderCanvasHeight - renderViewportHeight - renderHeightOff, renderViewportWidth, renderViewportHeight);
-
-			glUseProgram(glProgram);
+            glUseProgram(glProgram);
+            glDpiAwareViewport(uniViewport, renderWidthOff, renderCanvasHeight - renderViewportHeight - renderHeightOff, renderViewportWidth, renderViewportHeight);
 
 			// Setup anti-aliasing
 			final AntiAliasingMode antiAliasingMode = config.antiAliasingMode();
@@ -2025,7 +2010,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 				final int playerY = lp.getY();
 				final int playerZ = 0;
 
-				glUniform1i(uniMaskMinimap, 1);
+				glUniform1i(uniHdMinimapRenderPass, 1);
 
 				final int drawDistanceSceneUnits = Math.min(config.shadowDistance().getValue(), (int)client.getMinimapZoom()) * Perspective.LOCAL_TILE_SIZE / 2;
 				final int east = Math.min(playerX + drawDistanceSceneUnits, Perspective.LOCAL_TILE_SIZE * Perspective.SCENE_SIZE);
@@ -2050,9 +2035,10 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 				Mat4.mul(topDownProjectionMatrix, Mat4.translate(-(width / 2f + west), -playerZ, -(height / 2f + south)));
 				glUniformMatrix4fv(uniProjectionMatrix, false, topDownProjectionMatrix);
 
-				glDpiAwareViewport(minimapLocation().getX(), renderViewportHeight - minimapLocation().getY() - 152, 152, 152);
+				glDpiAwareViewport(uniViewport, getMinimapLocation().getX(), canvasHeight - getMinimapLocation().getY() - 152, 152, 152);
 				glDrawArrays(GL_TRIANGLES, 0, renderBufferOffset);
-				glUniform1i(uniMaskMinimap, 0);
+
+				glUniform1i(uniHdMinimapRenderPass, 0);
 			}
 
 			glDisable(GL_BLEND);
@@ -2105,23 +2091,6 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		glBindFramebuffer(GL_FRAMEBUFFER, awtContext.getFramebuffer(false));
 
 		checkGLErrors();
-	}
-
-	public Point minimapLocation() {
-		Widget minimapDrawWidget;
-
-		if (client.isResized()) {
-			if (client.getVarbitValue(Varbits.SIDE_PANELS) == 1) {
-				minimapDrawWidget = client.getWidget(WidgetInfo.RESIZABLE_MINIMAP_DRAW_AREA);
-			} else {
-				minimapDrawWidget = client.getWidget(WidgetInfo.RESIZABLE_MINIMAP_STONES_DRAW_AREA);
-			}
-		} else {
-			minimapDrawWidget = client.getWidget(WidgetInfo.FIXED_VIEWPORT_MINIMAP_DRAW_AREA);
-		}
-
-		return minimapDrawWidget == null ? new Point(0,0) : minimapDrawWidget.getCanvasLocation();
-
 	}
 
 	private void drawUi(final int overlayColor, final int canvasHeight, final int canvasWidth)
@@ -2471,14 +2440,11 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		checkGLErrors();
 	}
 
-
-
 	/**
 	 * Check is a model is visible and should be drawn.
 	 */
 	private boolean isVisible(Model model, int pitchSin, int pitchCos, int yawSin, int yawCos, int x, int y, int z)
 	{
-
 		return true;
 	}
 
@@ -2657,24 +2623,31 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		return (int) (value * scale + .5);
 	}
 
-	private void glDpiAwareViewport(final int x, final int y, final int width, final int height)
+    private void glDpiAwareViewport(int x, int y, int width, int height)
+    {
+        glDpiAwareViewport(0, x, y, width, height);
+    }
+
+	private void glDpiAwareViewport(int viewportUniform, int x, int y, int width, int height)
 	{
-		if (OSType.getOSType() == OSType.MacOS)
-		{
-			// macos handles DPI scaling for us already
-			glViewport(x, y, width, height);
-		}
-		else
+        // macOS handles DPI scaling for us already
+        if (OSType.getOSType() != OSType.MacOS)
 		{
 			final GraphicsConfiguration graphicsConfiguration = clientUI.getGraphicsConfiguration();
 			if (graphicsConfiguration == null) return;
 			final AffineTransform t = graphicsConfiguration.getDefaultTransform();
-			glViewport(
-				getScaledValue(t.getScaleX(), x),
-				getScaledValue(t.getScaleY(), y),
-				getScaledValue(t.getScaleX(), width),
-				getScaledValue(t.getScaleY(), height));
+            x = getScaledValue(t.getScaleX(), x);
+            y = getScaledValue(t.getScaleY(), y);
+            width = getScaledValue(t.getScaleX(), width);
+            height = getScaledValue(t.getScaleY(), height);
 		}
+
+        glViewport(x, y, width, height);
+
+        if (viewportUniform != 0) {
+            glUniform4i(viewportUniform, x, y, width, height);
+            checkGLErrors();
+        }
 	}
 
 	private int getDrawDistance()
@@ -2704,6 +2677,22 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 
 		return new int[]{camX, camY, camZ};
 	}
+
+    public Point getMinimapLocation() {
+        Widget minimapDrawWidget;
+
+        if (client.isResized()) {
+            if (client.getVarbitValue(Varbits.SIDE_PANELS) == 1) {
+                minimapDrawWidget = client.getWidget(WidgetInfo.RESIZABLE_MINIMAP_DRAW_AREA);
+            } else {
+                minimapDrawWidget = client.getWidget(WidgetInfo.RESIZABLE_MINIMAP_STONES_DRAW_AREA);
+            }
+        } else {
+            minimapDrawWidget = client.getWidget(WidgetInfo.FIXED_VIEWPORT_MINIMAP_DRAW_AREA);
+        }
+
+        return minimapDrawWidget == null ? new Point(0,0) : minimapDrawWidget.getCanvasLocation();
+    }
 
 	private void updateBuffer(@Nonnull GLBuffer glBuffer, int target, @Nonnull ByteBuffer data, int usage, long clFlags)
 	{

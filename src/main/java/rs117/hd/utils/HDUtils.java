@@ -27,22 +27,10 @@ package rs117.hd.utils;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import java.awt.image.BufferedImage;
-
 @Slf4j
 @Singleton
 public class HDUtils
 {
-
-	private static int getRGBAFromImage(BufferedImage image, int x, int y) {
-		int pixel = image.getRGB(x, y);
-		int red = (pixel & 0xff0000) >> 16;
-		int green = (pixel & 0xff00) >> 8;
-		int blue = pixel & 0xff;
-		int alpha = (pixel & 0xff000000) >> 24;
-		return (alpha << 24) | (blue << 16) | (green << 8) | red;
-	}
-
 	// directional vectors approximately opposite of the directional light used by the client
 	private static final float[] lightDirTile = new float[]{
 		0.70710678f, 0.70710678f, 0f
