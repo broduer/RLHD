@@ -34,6 +34,7 @@
 
 uniform sampler2DArray textureArray;
 uniform sampler2D shadowMap;
+uniform sampler2D maskTexture;
 
 uniform mat4 lightProjectionMatrix;
 
@@ -56,6 +57,7 @@ uniform float lightningBrightness;
 uniform vec3 lightDirection;
 uniform float shadowMaxBias;
 uniform int shadowsEnabled;
+uniform int maskMinimap;
 uniform bool underwaterEnvironment;
 uniform bool underwaterCaustics;
 uniform vec3 underwaterCausticsColor;
@@ -782,4 +784,10 @@ void main() {
     }
 
     FragColor = outputColor;
+
+    if (maskMinimap == 1) {
+        vec3 mask = texelFetch(maskTexture, ivec2(gl_FragCoord).xy, 0).rgb;
+        FragColor = vec4(mask, 1);
+    }
+
 }

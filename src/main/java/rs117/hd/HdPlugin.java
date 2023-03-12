@@ -32,8 +32,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
+import net.runelite.api.Point;
+import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.events.*;
 import net.runelite.api.hooks.DrawCallbacks;
+import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.RuneLite;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
@@ -55,6 +59,8 @@ import org.lwjgl.opengl.GLCapabilities;
 import org.lwjgl.opengl.GLUtil;
 import org.lwjgl.system.Callback;
 import org.lwjgl.system.Configuration;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import rs117.hd.config.*;
 import rs117.hd.data.WaterType;
 import rs117.hd.data.materials.Material;
@@ -77,6 +83,7 @@ import rs117.hd.utils.buffer.GpuFloatBuffer;
 import rs117.hd.utils.buffer.GpuIntBuffer;
 
 import javax.annotation.Nonnull;
+import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.swing.*;
@@ -84,6 +91,8 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -114,6 +123,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 	public static final int TEXTURE_UNIT_UI = GL_TEXTURE0; // default state
 	public static final int TEXTURE_UNIT_GAME = GL_TEXTURE1;
 	public static final int TEXTURE_UNIT_SHADOW_MAP = GL_TEXTURE2;
+
+	public static final int TEXTURE_UNIT_MINIMAP_MASK = GL_TEXTURE3;
 
 	// This is the maximum number of triangles the compute shaders support
 	public static final int MAX_TRIANGLE = 6144;
@@ -226,7 +237,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		.getPathOrDefault(ENV_SHADER_PATH, () -> path(HdPlugin.class))
 		.chroot();
 
-	private int glProgram;
+	public int glProgram;
 	private int glComputeProgram;
 	private int glSmallComputeProgram;
 	private int glUnorderedComputeProgram;
@@ -296,6 +307,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 	private int uniUseFog;
 	private int uniFogColor;
 	private int uniFogDepth;
+	public int uniMaskMinimap;
 	private int uniDrawDistance;
 	private int uniWaterColorLight;
 	private int uniWaterColorMid;
@@ -331,6 +343,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 	private int uniProjectionMatrix;
 	private int uniLightProjectionMatrix;
 	private int uniShadowMap;
+	public int uniMaskTexture;
 	private int uniUiTexture;
 	private int uniTexSourceDimensions;
 	private int uniTexTargetDimensions;
@@ -566,7 +579,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 				lightManager.startUp();
 				modelOverrideManager.startUp();
 				modelPusher.startUp();
-
+				client.setMinimapTileDrawer(this::drawTile);
 				if (client.getGameState() == GameState.LOGGED_IN)
 				{
 					uploadScene();
@@ -591,7 +604,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		FileWatcher.destroy();
 		developerTools.deactivate();
 		lightManager.shutDown();
-
+		client.setMinimapTileDrawer(null);
 		clientThread.invoke(() ->
 		{
 			client.setGpu(false);
@@ -670,6 +683,23 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 	HdPluginConfig provideConfig(ConfigManager configManager)
 	{
 		return configManager.getConfig(HdPluginConfig.class);
+	}
+
+
+	private final int[] tmpScreenX = new int[6];
+	private final int[] tmpScreenY = new int[6];
+
+	static int blend(int var0, int var1)
+	{
+		var1 = (var0 & 127) * var1 >> 7;
+		var1 = Math.max(2, var1);
+		var1 = Math.min(126, var1);
+		return (var0 & 0xFF80) + var1;
+	}
+
+	private void drawTile(Tile tile0, int tx, int ty, int px0, int py0, int px1, int py1)
+	{
+		client.getRasterizer().fillRectangle(px0, py0, px1 - px0, py1 - py0, Color.decode("ff00ff").getRGB());
 	}
 
 	private String generateFetchCases(String array, int from, int to)
@@ -789,7 +819,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		glUseProgram(glProgram);
 		glUniform1i(uniTextureArray, 1);
 		glUniform1i(uniShadowMap, 2);
-
+		glUniform1i(uniMaskTexture, 3);
 		// Validate program
 		glValidateProgram(glProgram);
 		if (glGetProgrami(glProgram, GL_VALIDATE_STATUS) == GL_FALSE)
@@ -812,11 +842,13 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		uniProjectionMatrix = glGetUniformLocation(glProgram, "projectionMatrix");
 		uniLightProjectionMatrix = glGetUniformLocation(glProgram, "lightProjectionMatrix");
 		uniShadowMap = glGetUniformLocation(glProgram, "shadowMap");
+		uniMaskTexture = glGetUniformLocation(glProgram, "maskTexture");
 		uniSaturation = glGetUniformLocation(glProgram, "saturation");
 		uniContrast = glGetUniformLocation(glProgram, "contrast");
 		uniUseFog = glGetUniformLocation(glProgram, "useFog");
 		uniFogColor = glGetUniformLocation(glProgram, "fogColor");
 		uniFogDepth = glGetUniformLocation(glProgram, "fogDepth");
+		uniMaskMinimap = glGetUniformLocation(glProgram, "maskMinimap");
 		uniWaterColorLight = glGetUniformLocation(glProgram, "waterColorLight");
 		uniWaterColorMid = glGetUniformLocation(glProgram, "waterColorMid");
 		uniWaterColorDark = glGetUniformLocation(glProgram, "waterColorDark");
@@ -1743,7 +1775,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 				final int height = north - south;
 				final int near = 10000;
 
-				final int maxDrawDistance = 90;
+				final int maxDrawDistance = 200;
 				final float maxScale = 0.7f;
 				final float minScale = 0.4f;
 				final float scaleMultiplier = 1.0f - (getDrawDistance() / (maxDrawDistance * maxScale));
@@ -1987,6 +2019,42 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 
 			glDrawArrays(GL_TRIANGLES, 0, renderBufferOffset);
 
+			{
+				LocalPoint lp = client.getLocalPlayer().getLocalLocation();
+				final int playerX = lp.getX();
+				final int playerY = lp.getY();
+				final int playerZ = 0;
+
+				glUniform1i(uniMaskMinimap, 1);
+
+				final int drawDistanceSceneUnits = Math.min(config.shadowDistance().getValue(), (int)client.getMinimapZoom()) * Perspective.LOCAL_TILE_SIZE / 2;
+				final int east = Math.min(playerX + drawDistanceSceneUnits, Perspective.LOCAL_TILE_SIZE * Perspective.SCENE_SIZE);
+				final int west = Math.max(playerX - drawDistanceSceneUnits, 0);
+				final int north = Math.min(playerY + drawDistanceSceneUnits, Perspective.LOCAL_TILE_SIZE * Perspective.SCENE_SIZE);
+				final int south = Math.max(playerY - drawDistanceSceneUnits, 0);
+				final int width = east - west;
+				final int height = north - south;
+				final int near = 10000;
+
+				final int maxDrawDistance = 8;
+				final float maxScale = 0.7f;
+				final float minScale = 0.2f;
+				final float scaleMultiplier = ((int)client.getMinimapZoom() / (maxDrawDistance * maxScale));
+				float scale = HDUtils.lerp(minScale, minScale, scaleMultiplier);
+				float[] topDownProjectionMatrix = Mat4.identity();
+
+				Mat4.mul(topDownProjectionMatrix, Mat4.scale(scale, scale, scale));
+				Mat4.mul(topDownProjectionMatrix, Mat4.ortho(width, height, near));
+				Mat4.mul(topDownProjectionMatrix, Mat4.rotateX((float) (-Math.PI / 2)));
+				Mat4.mul(topDownProjectionMatrix, Mat4.rotateY((float) (yaw / 1024.f * Math.PI)));
+				Mat4.mul(topDownProjectionMatrix, Mat4.translate(-(width / 2f + west), -playerZ, -(height / 2f + south)));
+				glUniformMatrix4fv(uniProjectionMatrix, false, topDownProjectionMatrix);
+
+				glDpiAwareViewport(minimapLocation().getX(), renderViewportHeight - minimapLocation().getY() - 152, 152, 152);
+				glDrawArrays(GL_TRIANGLES, 0, renderBufferOffset);
+				glUniform1i(uniMaskMinimap, 0);
+			}
+
 			glDisable(GL_BLEND);
 			glDisable(GL_CULL_FACE);
 
@@ -2037,6 +2105,23 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		glBindFramebuffer(GL_FRAMEBUFFER, awtContext.getFramebuffer(false));
 
 		checkGLErrors();
+	}
+
+	public Point minimapLocation() {
+		Widget minimapDrawWidget;
+
+		if (client.isResized()) {
+			if (client.getVarbitValue(Varbits.SIDE_PANELS) == 1) {
+				minimapDrawWidget = client.getWidget(WidgetInfo.RESIZABLE_MINIMAP_DRAW_AREA);
+			} else {
+				minimapDrawWidget = client.getWidget(WidgetInfo.RESIZABLE_MINIMAP_STONES_DRAW_AREA);
+			}
+		} else {
+			minimapDrawWidget = client.getWidget(WidgetInfo.FIXED_VIEWPORT_MINIMAP_DRAW_AREA);
+		}
+
+		return minimapDrawWidget == null ? new Point(0,0) : minimapDrawWidget.getCanvasLocation();
+
 	}
 
 	private void drawUi(final int overlayColor, final int canvasHeight, final int canvasWidth)
@@ -2386,50 +2471,15 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		checkGLErrors();
 	}
 
+
+
 	/**
 	 * Check is a model is visible and should be drawn.
 	 */
 	private boolean isVisible(Model model, int pitchSin, int pitchCos, int yawSin, int yawCos, int x, int y, int z)
 	{
-		model.calculateBoundsCylinder();
 
-		final int XYZMag = model.getXYZMag();
-		final int bottomY = model.getBottomY();
-		final int zoom = (configShadowsEnabled && configExpandShadowDraw) ? client.get3dZoom() / 2 : client.get3dZoom();
-		final int modelHeight = model.getModelHeight();
-
-		int Rasterizer3D_clipMidX2 = client.getRasterizer3D_clipMidX2();
-		int Rasterizer3D_clipNegativeMidX = client.getRasterizer3D_clipNegativeMidX();
-		int Rasterizer3D_clipNegativeMidY = client.getRasterizer3D_clipNegativeMidY();
-		int Rasterizer3D_clipMidY2 = client.getRasterizer3D_clipMidY2();
-
-		int var11 = yawCos * z - yawSin * x >> 16;
-		int var12 = pitchSin * y + pitchCos * var11 >> 16;
-		int var13 = pitchCos * XYZMag >> 16;
-		int depth = var12 + var13;
-		if (depth > 50)
-		{
-			int rx = z * yawSin + yawCos * x >> 16;
-			int var16 = (rx - XYZMag) * zoom;
-			if (var16 / depth < Rasterizer3D_clipMidX2)
-			{
-				int var17 = (rx + XYZMag) * zoom;
-				if (var17 / depth > Rasterizer3D_clipNegativeMidX)
-				{
-					int ry = pitchCos * y - var11 * pitchSin >> 16;
-					int yheight = pitchSin * XYZMag >> 16;
-					int ybottom = (pitchCos * bottomY >> 16) + yheight;
-					int var20 = (ry + ybottom) * zoom;
-					if (var20 / depth > Rasterizer3D_clipNegativeMidY)
-					{
-						int ytop = (pitchCos * modelHeight >> 16) + yheight;
-						int var22 = (ry - ytop) * zoom;
-						return var22 / depth < Rasterizer3D_clipMidY2;
-					}
-				}
-			}
-		}
-		return false;
+		return true;
 	}
 
 	/**
@@ -2889,7 +2939,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		}
 	}
 
-	private void checkGLErrors()
+	public void checkGLErrors()
 	{
 		if (!log.isDebugEnabled())
 		{
