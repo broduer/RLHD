@@ -24,12 +24,12 @@
  */
 package rs117.hd.scene;
 
-import java.awt.Graphics2D;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
+import net.runelite.api.SpriteID;
 import net.runelite.api.Texture;
 import net.runelite.api.TextureProvider;
-import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.SpriteManager;
 import org.lwjgl.BufferUtils;
@@ -82,6 +82,8 @@ public class TextureManager
 	private ClientThread clientThread;
 
 	private int textureArray;
+	@Setter
+	private boolean requestNewMinimapMask;
     private int textureSize;
     private int[] materialOrdinalToTextureIndex;
     private int[] materialReplacements;
@@ -119,8 +121,8 @@ public class TextureManager
 
 	public void ensureTexturesLoaded(TextureProvider textureProvider)
 	{
-        int activeMinimapMaskSprite = 2;
-        if (activeMinimapMaskSprite != currentlyLoadedMinimapMask) {
+
+        if (requestNewMinimapMask || minimapMaskTexture == 0) {
             if (minimapMaskTexture != 0) {
                 glDeleteTextures(minimapMaskTexture);
                 minimapMaskTexture = 0;
@@ -130,24 +132,25 @@ public class TextureManager
             minimapMaskTexture = glGenTextures();
             glBindTexture(GL_TEXTURE_2D, minimapMaskTexture);
 
-			BufferedImage image = spriteManager.getSprite(1178,0);
+			BufferedImage image = spriteManager.getSprite(client.isResized() ? SpriteID.RESIZEABLE_MODE_MINIMAP_ALPHA_MASK : SpriteID.FIXED_MODE_MINIMAP_ALPHA_MASK,0);
 
-            int width = image.getWidth();
+			int width = image.getWidth();
             int height = image.getHeight();
 
-            BufferedImage intImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-            {
-                Graphics2D g = (Graphics2D) intImage.getGraphics();
-                g.drawImage(image, 0, 0, null);
-            }
-
-            int[] pixels = ((DataBufferInt) intImage.getRaster().getDataBuffer()).getData();
+            int[] pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
             IntBuffer pixelBuffer = BufferUtils.createIntBuffer(width * height);
+			IntBuffer flippedBuffer = BufferUtils.createIntBuffer(width * height);
             pixelBuffer.put(pixels).flip();
+			for (int y = height - 1; y >= 0; y--) {
+				for (int x = 0; x < width; x++) {
+					flippedBuffer.put(pixelBuffer.get(y * width + x));
+				}
+			}
+			flippedBuffer.flip();
 
             // Go from TYPE_4BYTE_ABGR in the BufferedImage to RGBA
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
-                GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixelBuffer);
+                GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, flippedBuffer);
             plugin.checkGLErrors();
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -156,10 +159,9 @@ public class TextureManager
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             plugin.checkGLErrors();
 
-            currentlyLoadedMinimapMask = activeMinimapMaskSprite;
-
             // Reset
             glActiveTexture(TEXTURE_UNIT_UI);
+			requestNewMinimapMask = false;
         }
 
 		if (textureArray != 0)
