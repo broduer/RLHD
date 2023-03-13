@@ -149,6 +149,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 	private HdPluginConfig config;
 
 	@Inject
+	private MinimapRender minimapRender;
+
+	@Inject
 	private TextureManager textureManager;
 
 	@Inject
@@ -574,7 +577,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 				lightManager.startUp();
 				modelOverrideManager.startUp();
 				modelPusher.startUp();
-				client.setMinimapTileDrawer(this::drawTile);
+				if(config.minimapType() != MinimapType.NORMAL) {
+					client.setMinimapTileDrawer(minimapRender::drawTile);
+				}
 				if (client.getGameState() == GameState.LOGGED_IN)
 				{
 					uploadScene();
@@ -601,7 +606,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		lightManager.shutDown();
 		clientThread.invoke(() ->
 		{
-            client.setMinimapTileDrawer(null);
+			if(config.minimapType() != MinimapType.NORMAL) {
+				client.setMinimapTileDrawer(null);
+			}
 			client.setGpu(false);
 			client.setDrawCallbacks(null);
 			client.setUnlockedFps(false);
@@ -1469,7 +1476,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 
     private void drawTile(Tile tile0, int tx, int ty, int px0, int py0, int px1, int py1)
     {
-        client.getRasterizer().fillRectangle(px0, py0, px1 - px0, py1 - py0, Color.decode("ff00ff").getRGB());
+        client.getRasterizer().fillRectangle(px0, py0, px1 - px0, py1 - py0, Color.PINK.getRGB());
     }
 
 	@Override
@@ -2334,6 +2341,15 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 					shutdownShadowMapFbo();
 					initShadowMapFbo();
 				});
+				break;
+			case "minimapType":
+				if(config.minimapType() != MinimapType.NORMAL) {
+					client.setMinimapTileDrawer(minimapRender::drawTile);
+					textureManager.setRequestNewMinimapMask(true);
+				} else {
+					client.setMinimapTileDrawer(null);
+					clientThread.invoke(() -> textureManager.clearMinimapMask());
+				}
 				break;
 			case "shadowResolution":
 				clientThread.invoke(() ->

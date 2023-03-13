@@ -62,6 +62,18 @@ public interface HdPluginConfig extends Config
 	}
 
 	@ConfigItem(
+			keyName = "minimapType",
+			name = "Minimap Mode",
+			description = "Edits the minimap style.<br>Normal - Default oldschool map<br>Shaded - Add the map style from 2008<br>HD - Adds a topdown detailed map in 3d",
+			position = 1,
+			section = generalSettings
+	)
+	default MinimapType minimapType()
+	{
+		return MinimapType.SHADED;
+	}
+
+	@ConfigItem(
 		keyName = "antiAliasingMode",
 		name = "Anti-Aliasing",
 		description =

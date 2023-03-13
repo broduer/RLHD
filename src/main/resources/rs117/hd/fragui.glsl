@@ -67,6 +67,10 @@ void main() {
     vec4 c = texture(uiTexture, TexCoord);
     #endif
 
+    if (c.r == 255.0/255.0 && c.g == 175.0/255.0 && c.b == 175.0/255.0) {
+        discard;
+    }
+
     c = alphaBlend(c, alphaOverlay);
     c.rgb = colorBlindnessCompensation(c.rgb);
 

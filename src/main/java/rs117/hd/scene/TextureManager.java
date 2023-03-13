@@ -37,6 +37,7 @@ import org.lwjgl.opengl.EXTTextureFilterAnisotropic;
 import org.lwjgl.opengl.GL;
 import rs117.hd.HdPlugin;
 import rs117.hd.HdPluginConfig;
+import rs117.hd.config.MinimapType;
 import rs117.hd.data.materials.Material;
 import rs117.hd.utils.Env;
 import rs117.hd.utils.ResourcePath;
@@ -88,7 +89,6 @@ public class TextureManager
     private int[] materialOrdinalToTextureIndex;
     private int[] materialReplacements;
     private int minimapMaskTexture;
-    private int currentlyLoadedMinimapMask;
 
 	// Temporary buffers for texture loading
 	private IntBuffer pixelBuffer;
@@ -122,47 +122,9 @@ public class TextureManager
 	public void ensureTexturesLoaded(TextureProvider textureProvider)
 	{
 
-        if (requestNewMinimapMask || minimapMaskTexture == 0) {
-            if (minimapMaskTexture != 0) {
-                glDeleteTextures(minimapMaskTexture);
-                minimapMaskTexture = 0;
-            }
-
-            glActiveTexture(TEXTURE_UNIT_MINIMAP_MASK);
-            minimapMaskTexture = glGenTextures();
-            glBindTexture(GL_TEXTURE_2D, minimapMaskTexture);
-
-			BufferedImage image = spriteManager.getSprite(client.isResized() ? SpriteID.RESIZEABLE_MODE_MINIMAP_ALPHA_MASK : SpriteID.FIXED_MODE_MINIMAP_ALPHA_MASK,0);
-
-			int width = image.getWidth();
-            int height = image.getHeight();
-
-            int[] pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
-            IntBuffer pixelBuffer = BufferUtils.createIntBuffer(width * height);
-			IntBuffer flippedBuffer = BufferUtils.createIntBuffer(width * height);
-            pixelBuffer.put(pixels).flip();
-			for (int y = height - 1; y >= 0; y--) {
-				for (int x = 0; x < width; x++) {
-					flippedBuffer.put(pixelBuffer.get(y * width + x));
-				}
-			}
-			flippedBuffer.flip();
-
-            // Go from TYPE_4BYTE_ABGR in the BufferedImage to RGBA
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
-                GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, flippedBuffer);
-            plugin.checkGLErrors();
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            plugin.checkGLErrors();
-
-            // Reset
-            glActiveTexture(TEXTURE_UNIT_UI);
-			requestNewMinimapMask = false;
-        }
+		if (config.minimapType() != MinimapType.NORMAL) {
+			handleMinimapMask();
+		}
 
 		if (textureArray != 0)
 		{
@@ -438,11 +400,7 @@ public class TextureManager
                 textureArray = 0;
             }
 
-            currentlyLoadedMinimapMask = 0;
-            if (minimapMaskTexture != 0) {
-                glDeleteTextures(minimapMaskTexture);
-                minimapMaskTexture = 0;
-            }
+			clearMinimapMask();
         });
 	}
 
@@ -475,4 +433,62 @@ public class TextureManager
 
 		return true;
 	}
+
+	/**
+	 * Loads a texture into opengl for the minimap to use as a mask
+	 */
+	public void handleMinimapMask() {
+		if (requestNewMinimapMask || minimapMaskTexture == 0) {
+			if (minimapMaskTexture != 0) {
+				glDeleteTextures(minimapMaskTexture);
+				minimapMaskTexture = 0;
+			}
+
+			glActiveTexture(TEXTURE_UNIT_MINIMAP_MASK);
+			minimapMaskTexture = glGenTextures();
+			glBindTexture(GL_TEXTURE_2D, minimapMaskTexture);
+
+			BufferedImage image = spriteManager.getSprite(client.isResized() ? SpriteID.RESIZEABLE_MODE_MINIMAP_ALPHA_MASK : SpriteID.FIXED_MODE_MINIMAP_ALPHA_MASK, 0);
+
+			int width = image.getWidth();
+			int height = image.getHeight();
+
+			int[] pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+			IntBuffer pixelBuffer = BufferUtils.createIntBuffer(width * height);
+			IntBuffer flippedBuffer = BufferUtils.createIntBuffer(width * height);
+			pixelBuffer.put(pixels).flip();
+			for (int y = height - 1; y >= 0; y--) {
+				for (int x = 0; x < width; x++) {
+					flippedBuffer.put(pixelBuffer.get(y * width + x));
+				}
+			}
+			flippedBuffer.flip();
+
+			// Go from TYPE_4BYTE_ABGR in the BufferedImage to RGBA
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
+					GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, flippedBuffer);
+			plugin.checkGLErrors();
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			plugin.checkGLErrors();
+
+			// Reset
+			glActiveTexture(TEXTURE_UNIT_UI);
+			requestNewMinimapMask = false;
+		}
+	}
+
+	/**
+	 * Clears the minimap mask texture if it exists.
+	 */
+	public void clearMinimapMask() {
+		if (minimapMaskTexture != 0) {
+			glDeleteTextures(minimapMaskTexture);
+			minimapMaskTexture = 0;
+		}
+	}
+
 }
