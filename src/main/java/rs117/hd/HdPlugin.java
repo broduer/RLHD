@@ -2009,7 +2009,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 
 			glDrawArrays(GL_TRIANGLES, 0, renderBufferOffset);
 
-			{
+			if(config.minimapType() == MinimapType.HD) {
 				LocalPoint lp = client.getLocalPlayer().getLocalLocation();
 				final int playerX = lp.getX();
 				final int playerY = lp.getY();
