@@ -1486,11 +1486,6 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		checkGLErrors();
 	}
 
-    private void drawTile(Tile tile0, int tx, int ty, int px0, int py0, int px1, int py1)
-    {
-        client.getRasterizer().fillRectangle(px0, py0, px1 - px0, py1 - py0, Color.PINK.getRGB());
-    }
-
 	@Override
 	public void drawScenePaint(int orientation, int pitchSin, int pitchCos, int yawSin, int yawCos, int x, int y, int z,
 		SceneTilePaint paint, int tileZ, int tileX, int tileY,
@@ -2116,13 +2111,10 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 
 	private void drawUi(final int overlayColor, final int canvasHeight, final int canvasWidth)
 	{
-		glEnable(GL_BLEND);
+		glUseProgram(glUiProgram);
 
-		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 		glBindTexture(GL_TEXTURE_2D, interfaceTexture);
 
-		// Use the texture bound in the first pass
-		glUseProgram(glUiProgram);
 		glUniform2i(uniTexSourceDimensions, canvasWidth, canvasHeight);
 		glUniform2i(uniMinimapLocation, minimapLocation.getX(), minimapLocation.getY());
 		glUniform1i(uniHdMinimapRenderPassUI, renderHDMinimap() ? 1 : 0 );
@@ -2156,6 +2148,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, function);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, function);
 		}
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		// Texture on UI
 		glBindVertexArray(vaoUiHandle);

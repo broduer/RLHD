@@ -787,7 +787,7 @@ void main() {
 
     if (hdMinimapRenderPass) {
         // Get the alpha value of the minimap mask at the current fragment position
-        float maskAlpha = texelFetch(minimapMask, ivec2(gl_FragCoord.xy - viewport.xy), 0).a;
-        FragColor.a = maskAlpha = 1 - maskAlpha;
+        float mask = texelFetch(minimapMask, ivec2(gl_FragCoord.xy - viewport.xy), 0).a;
+        FragColor.a = 1 - mask;
     }
 }

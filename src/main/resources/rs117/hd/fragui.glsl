@@ -35,10 +35,20 @@ uniform sampler2D uiTexture;
 uniform int samplingMode;
 uniform ivec2 sourceDimensions;
 uniform ivec2 minimapLocation;
-uniform bool hdMinimapRenderPass;
 uniform ivec2 targetDimensions;
 uniform float colorBlindnessIntensity;
 uniform vec4 alphaOverlay;
+
+#define TRANSPARENCY_COLOR_PACKED 12345678
+const ivec3 TRANSPARENCY_COLOR = ivec3(
+    TRANSPARENCY_COLOR_PACKED >> 16 & 0xFF,
+    TRANSPARENCY_COLOR_PACKED >> 8 & 0xFF,
+    TRANSPARENCY_COLOR_PACKED & 0xFF
+);
+
+vec4 replaceTransparency(vec4 c) {
+    return ivec3(round(c.rgb * 0xFF)) == TRANSPARENCY_COLOR ? vec4(0) : c;
+}
 
 #include scaling/bicubic.glsl
 #include utils/color_blindness.glsl
@@ -54,10 +64,7 @@ in vec2 TexCoord;
 out vec4 FragColor;
 
 vec4 alphaBlend(vec4 src, vec4 dst) {
-    return vec4(
-        src.rgb + dst.rgb * (1.0f - src.a),
-        src.a + dst.a * (1.0f - src.a)
-    );
+    return dst * (1 - src.a) + src;
 }
 
 void main() {
@@ -67,13 +74,10 @@ void main() {
     vec4 c = textureXBR(uiTexture, TexCoord, xbrTable, ceil(1.0 * targetDimensions.x / sourceDimensions.x));
     #else // NEAREST or LINEAR, which uses GL_TEXTURE_MIN_FILTER/GL_TEXTURE_MAG_FILTER to affect sampling
     vec4 c = texture(uiTexture, TexCoord);
+    c = replaceTransparency(c); // TODO: Fix bilinear by implementing it in software
     #endif
 
-    if(hdMinimapRenderPass) {
-        if (c.r == 255.0/255.0 && c.g == 175.0/255.0 && c.b == 175.0/255.0) {
-            discard;
-        }
-    }
+    c.rgb /= c.a; // Undo vanilla premultiplied alpha
 
     c = alphaBlend(c, alphaOverlay);
     c.rgb = colorBlindnessCompensation(c.rgb);
