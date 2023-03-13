@@ -34,6 +34,8 @@ uniform sampler2D uiTexture;
 
 uniform int samplingMode;
 uniform ivec2 sourceDimensions;
+uniform ivec2 minimapLocation;
+uniform bool hdMinimapRenderPass;
 uniform ivec2 targetDimensions;
 uniform float colorBlindnessIntensity;
 uniform vec4 alphaOverlay;
@@ -67,8 +69,10 @@ void main() {
     vec4 c = texture(uiTexture, TexCoord);
     #endif
 
-    if (c.r == 255.0/255.0 && c.g == 175.0/255.0 && c.b == 175.0/255.0) {
-        discard;
+    if(hdMinimapRenderPass) {
+        if (c.r == 255.0/255.0 && c.g == 175.0/255.0 && c.b == 175.0/255.0) {
+            discard;
+        }
     }
 
     c = alphaBlend(c, alphaOverlay);

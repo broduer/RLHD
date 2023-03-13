@@ -46,6 +46,8 @@ import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.PluginChanged;
 import net.runelite.client.plugins.*;
 import net.runelite.client.plugins.entityhider.EntityHiderPlugin;
+import net.runelite.client.plugins.minimap.MinimapConfig;
+import net.runelite.client.plugins.minimap.MinimapPlugin;
 import net.runelite.client.plugins.skybox.SkyboxPlugin;
 import net.runelite.client.ui.ClientUI;
 import net.runelite.client.ui.DrawManager;
@@ -109,6 +111,7 @@ import static rs117.hd.utils.ResourcePath.path;
 )
 @PluginDependency(EntityHiderPlugin.class)
 @PluginDependency(SkyboxPlugin.class)
+@PluginDependency(MinimapPlugin.class)
 @Slf4j
 public class HdPlugin extends Plugin implements DrawCallbacks
 {
@@ -150,6 +153,11 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 
 	@Inject
 	private MinimapRender minimapRender;
+
+	@Inject
+	private MinimapPlugin minimapPlugin;
+
+	private MinimapConfig minimapConfig;
 
 	@Inject
 	private TextureManager textureManager;
@@ -301,6 +309,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 	// Uniforms
     private int uniViewport;
     private int uniHdMinimapRenderPass;
+	private int uniHdMinimapRenderPassUI;
 	private int uniColorBlindnessIntensity;
 	private int uniUiColorBlindnessIntensity;
 	private int uniUseFog;
@@ -345,6 +354,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
     private int uniShadowMap;
     private int uniMinimapMask;
 	private int uniTexSourceDimensions;
+	private int uniMinimapLocation;
 	private int uniTexTargetDimensions;
 	private int uniUiAlphaOverlay;
 	private int uniElapsedTime;
@@ -429,7 +439,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		configEnableModelBatching = config.enableModelBatching();
 		configEnableModelCaching = config.enableModelCaching();
 		configMaxDynamicLights = config.maxDynamicLights().getValue();
-
+		minimapConfig = configManager.getConfig(MinimapConfig.class);
 		clientThread.invoke(() ->
 		{
 			try
@@ -864,6 +874,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		uniUiTexture = glGetUniformLocation(glUiProgram, "uiTexture");
 		uniTexTargetDimensions = glGetUniformLocation(glUiProgram, "targetDimensions");
 		uniTexSourceDimensions = glGetUniformLocation(glUiProgram, "sourceDimensions");
+		uniMinimapLocation = glGetUniformLocation(glUiProgram, "minimapLocation");
+		uniHdMinimapRenderPassUI = glGetUniformLocation(glUiProgram, "hdMinimapRenderPass");
 		uniUiColorBlindnessIntensity = glGetUniformLocation(glUiProgram, "colorBlindnessIntensity");
 		uniUiAlphaOverlay = glGetUniformLocation(glUiProgram, "alphaOverlay");
 
@@ -1630,6 +1642,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
+	public Point minimapLocation = new Point(0,0);
+
 	@Override
 	public void draw(int overlayColor)
 	{
@@ -2009,7 +2023,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 
 			glDrawArrays(GL_TRIANGLES, 0, renderBufferOffset);
 
-			if(config.minimapType() == MinimapType.HD) {
+			if(renderHDMinimap()) {
 				LocalPoint lp = client.getLocalPlayer().getLocalLocation();
 				final int playerX = lp.getX();
 				final int playerY = lp.getY();
@@ -2040,7 +2054,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 				Mat4.mul(topDownProjectionMatrix, Mat4.translate(-(width / 2f + west), -playerZ, -(height / 2f + south)));
 				glUniformMatrix4fv(uniProjectionMatrix, false, topDownProjectionMatrix);
 
-				glDpiAwareViewport(uniViewport, getMinimapLocation().getX(), canvasHeight - getMinimapLocation().getY() - 152 + (!client.isResized() ? 1 : 0), 152, 152);
+				minimapLocation = new Point(getMinimapLocation().getX(),viewportHeight - getMinimapLocation().getY() - 152 + (!client.isResized() ? 1 : 0));
+
+				glDpiAwareViewport(uniViewport, minimapLocation.getX(), minimapLocation.getY(), 152, 152);
 				glDrawArrays(GL_TRIANGLES, 0, renderBufferOffset);
 
 				glUniform1i(uniHdMinimapRenderPass, 0);
@@ -2108,6 +2124,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		// Use the texture bound in the first pass
 		glUseProgram(glUiProgram);
 		glUniform2i(uniTexSourceDimensions, canvasWidth, canvasHeight);
+		glUniform2i(uniMinimapLocation, minimapLocation.getX(), minimapLocation.getY());
+		glUniform1i(uniHdMinimapRenderPassUI, renderHDMinimap() ? 1 : 0 );
 		glUniform1f(uniUiColorBlindnessIntensity, config.colorBlindnessIntensity() / 100.f);
 		glUniform4f(uniUiAlphaOverlay,
 			(overlayColor >> 16 & 0xFF) / 255f,
@@ -2151,6 +2169,14 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		glDisable(GL_BLEND);
 
 		stagingBufferVertices.clear();
+	}
+
+	public boolean renderHDMinimap() {
+		boolean minimapHidden = false;
+		if (pluginManager.isPluginEnabled(minimapPlugin)) {
+			minimapHidden = minimapConfig.hideMinimap();
+		}
+		return config.minimapType() == MinimapType.HD && !minimapHidden;
 	}
 
 	/**
