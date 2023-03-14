@@ -2049,7 +2049,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 				Mat4.mul(topDownProjectionMatrix, Mat4.translate(-(width / 2f + west), -playerZ, -(height / 2f + south)));
 				glUniformMatrix4fv(uniProjectionMatrix, false, topDownProjectionMatrix);
 
-				minimapLocation = new Point(getMinimapLocation().getX(),viewportHeight - getMinimapLocation().getY() - 152 + (!client.isResized() ? 1 : 0));
+				minimapLocation = new Point(getMinimapLocation().getX(),canvasHeight - getMinimapLocation().getY() - 152 + (!client.isResized() ? 1 : 0));
 
 				glDpiAwareViewport(uniViewport, minimapLocation.getX(), minimapLocation.getY(), 152, 152);
 				glDrawArrays(GL_TRIANGLES, 0, renderBufferOffset);
