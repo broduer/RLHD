@@ -384,6 +384,10 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 	private boolean hasLoggedIn;
 	private boolean lwjglInitted;
 
+	private int sceneId;
+	private int nextSceneId;
+
+
 	@Setter
 	private boolean isInGauntlet = false;
 
@@ -565,7 +569,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 
 				if (client.getGameState() == GameState.LOGGED_IN)
 				{
-					uploadScene();
+					Scene scene = client.getScene();
+					loadScene(scene);
+					swapScene(scene);
 				}
 
 				checkGLErrors();
@@ -2187,10 +2193,6 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 					modelPusher.clearModelCache();
 				}
 				break;
-			case LOGGED_IN:
-				uploadScene();
-				checkGLErrors();
-				break;
 			case LOGIN_SCREEN:
 				// Avoid drawing the last frame's buffer during LOADING after LOGIN_SCREEN
 				renderBufferOffset = 0;
@@ -2200,7 +2202,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		}
 	}
 
-	public void uploadScene()
+	@Override
+	public void loadScene(Scene scene)
 	{
 		lightManager.reset();
 
@@ -2210,7 +2213,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		stagingBufferUvs.clear();
 		stagingBufferNormals.clear();
 
-		sceneUploader.upload(client.getScene(), stagingBufferVertices, stagingBufferUvs, stagingBufferNormals);
+		sceneUploader.upload(scene, stagingBufferVertices, stagingBufferUvs, stagingBufferNormals);
 
 		dynamicOffsetVertices = stagingBufferVertices.position() / VERTEX_SIZE;
 		dynamicOffsetUvs = stagingBufferUvs.position() / UV_SIZE;
@@ -2226,6 +2229,24 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		stagingBufferVertices.clear();
 		stagingBufferUvs.clear();
 		stagingBufferNormals.clear();
+
+		nextSceneId = sceneUploader.sceneId;
+
+	}
+
+	public void reloadScene() {
+		Scene scene = client.getScene();
+		loadScene(scene);
+		swapScene(scene);
+	}
+
+	@Override
+	public void swapScene(Scene scene)
+	{
+
+		sceneId = nextSceneId;
+
+		nextSceneId = -1;
 	}
 
 	public void reloadSceneNextGameTick()
@@ -2314,7 +2335,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 				configReduceOverExposure = config.enableLegacyGreyColors();
 				clientThread.invoke(() -> {
 					modelPusher.clearModelCache();
-					uploadScene();
+					reloadScene();
 				});
 				break;
 			case "projectileLights":
@@ -2471,7 +2492,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 		}
 
 		// Model may be in the scene buffer
-		if (model.getSceneId() == sceneUploader.sceneId)
+		if (model.getSceneId() == sceneId)
 		{
 			model.calculateBoundsCylinder();
 
@@ -2889,7 +2910,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks
 	public void onGameTick(GameTick gameTick)
 	{
 		if (gameTicksUntilSceneReload > 0 && --gameTicksUntilSceneReload == 0) {
-			uploadScene();
+			reloadScene();
 		}
 
 		if (!hasLoggedIn && client.getGameState() == GameState.LOGGED_IN)

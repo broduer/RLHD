@@ -61,7 +61,7 @@ public class ModelOverrideManager {
                 }
                 if (client.getGameState() == GameState.LOGGED_IN) {
                     clientThread.invokeLater(() -> {
-                        plugin.uploadScene();
+                        plugin.reloadScene();
                         modelPusher.clearModelCache();
                     });
                 }
