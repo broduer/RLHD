@@ -3,6 +3,7 @@ package rs117.hd.utils;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import javax.inject.Inject;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.events.*;
 import net.runelite.client.config.Keybind;
@@ -14,6 +15,7 @@ import rs117.hd.data.environments.Area;
 import rs117.hd.overlays.FrameTimingsOverlay;
 import rs117.hd.overlays.ShadowMapOverlay;
 import rs117.hd.overlays.TileInfoOverlay;
+import rs117.hd.tooling.enviroment.EnvironmentEditor;
 
 @Slf4j
 public class DeveloperTools implements KeyListener {
@@ -21,6 +23,8 @@ public class DeveloperTools implements KeyListener {
 	private static final Keybind KEY_TOGGLE_TILE_INFO = new Keybind(KeyEvent.VK_F3, InputEvent.CTRL_DOWN_MASK);
 	private static final Keybind KEY_TOGGLE_FRAME_TIMINGS = new Keybind(KeyEvent.VK_F4, InputEvent.CTRL_DOWN_MASK);
 	private static final Keybind KEY_TOGGLE_SHADOW_MAP_OVERLAY = new Keybind(KeyEvent.VK_F5, InputEvent.CTRL_DOWN_MASK);
+
+	private static final Keybind KEY_TOGGLE_EDITOR = new Keybind(KeyEvent.VK_F6, InputEvent.CTRL_DOWN_MASK);
 
 	@Inject
 	private EventBus eventBus;
@@ -36,6 +40,9 @@ public class DeveloperTools implements KeyListener {
 
 	@Inject
 	private ShadowMapOverlay shadowMapOverlay;
+
+	@Inject
+	private EnvironmentEditor environmentEditor;
 
 	private boolean tileInfoOverlayEnabled = false;
 	private boolean frameTimingsOverlayEnabled = false;
@@ -96,6 +103,9 @@ public class DeveloperTools implements KeyListener {
 			case "shadowmap":
 				shadowMapOverlay.setActive(shadowMapOverlayEnabled = !shadowMapOverlayEnabled);
 				break;
+			case "editor":
+				openEditor();
+				break;
 		}
 	}
 
@@ -115,6 +125,17 @@ public class DeveloperTools implements KeyListener {
 			event.consume();
 			shadowMapOverlay.setActive(shadowMapOverlayEnabled = !shadowMapOverlayEnabled);
 		}
+
+		if (KEY_TOGGLE_EDITOR.matches(event)) {
+			event.consume();
+			openEditor();
+		}
+	}
+
+	public void openEditor() {
+		SwingUtilities.invokeLater(() -> {
+			environmentEditor.open();
+		});
 	}
 
 	@Override

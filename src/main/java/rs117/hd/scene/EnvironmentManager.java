@@ -29,6 +29,7 @@ import java.util.HashMap;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
@@ -37,6 +38,7 @@ import rs117.hd.HdPlugin;
 import rs117.hd.HdPluginConfig;
 import rs117.hd.config.DefaultSkyColor;
 import rs117.hd.scene.environments.Environment;
+import rs117.hd.tooling.enviroment.EnvironmentEditor;
 import rs117.hd.utils.AABB;
 import rs117.hd.utils.FileWatcher;
 import rs117.hd.utils.HDUtils;
@@ -71,6 +73,9 @@ public class EnvironmentManager {
 
 	@Inject
 	private HdPluginConfig config;
+
+	@Inject
+	private EnvironmentEditor environmentEditor;
 
 	// transition time
 	private static final int TRANSITION_DURATION = 3000;
@@ -148,11 +153,13 @@ public class EnvironmentManager {
 	private boolean lightningEnabled = false;
 	private boolean forceNextTransition = false;
 
-	private rs117.hd.scene.environments.Environment[] environments;
+	public rs117.hd.scene.environments.Environment[] environments;
 	private FileWatcher.UnregisterCallback fileWatcher;
 
+	public boolean forcedEnvironment = false;
+
 	@Nonnull
-	private Environment currentEnvironment = Environment.NONE;
+	public Environment currentEnvironment = Environment.NONE;
 
 	public void startUp() {
 		fileWatcher = ENVIRONMENTS_PATH.watch((path, first) -> {
@@ -270,13 +277,101 @@ public class EnvironmentManager {
 		lastFrameTime = currentTime;
 	}
 
+	public void forceEnvironment(Environment newEnvironment, boolean skipTransition) {
+		log.debug("changing environment from {} to {} (instant: {})", currentEnvironment, newEnvironment, skipTransition);
+		currentEnvironment = newEnvironment;
+
+		// set previous variables to current ones
+		startFogColor = currentFogColor;
+		startWaterColor = currentWaterColor;
+		startFogDepth = currentFogDepth;
+		startAmbientStrength = currentAmbientStrength;
+		startAmbientColor = currentAmbientColor;
+		startDirectionalStrength = currentDirectionalStrength;
+		startDirectionalColor = currentDirectionalColor;
+		startUnderglowStrength = currentUnderglowStrength;
+		startUnderglowColor = currentUnderglowColor;
+		startGroundFogStart = currentGroundFogStart;
+		startGroundFogEnd = currentGroundFogEnd;
+		startGroundFogOpacity = currentGroundFogOpacity;
+		startUnderwaterCausticsColor = currentUnderwaterCausticsColor;
+		startUnderwaterCausticsStrength = currentUnderwaterCausticsStrength;
+		for (int i = 0; i < 2; i++)
+			startSunAngles[i] = mod(currentSunAngles[i], TWO_PI);
+
+		updateTargetSkyColor();
+
+		var env = getCurrentEnvironment();
+		targetFogDepth = env.fogDepth;
+		targetGroundFogStart = env.groundFogStart;
+		targetGroundFogEnd = env.groundFogEnd;
+		targetGroundFogOpacity = env.groundFogOpacity;
+		lightningEnabled = env.lightningEffects;
+
+		var overworldEnv = getOverworldEnvironment();
+		float[] sunAngles = env.sunAngles;
+		if (sunAngles == null)
+			sunAngles = overworldEnv.sunAngles;
+		System.arraycopy(sunAngles, 0, targetSunAngles, 0, 2);
+
+		if (!config.atmosphericLighting())
+			env = overworldEnv;
+		targetAmbientStrength = env.ambientStrength;
+		targetAmbientColor = env.ambientColor;
+		targetDirectionalStrength = env.directionalStrength;
+		targetDirectionalColor = env.directionalColor;
+		targetUnderglowStrength = env.underglowStrength;
+		targetUnderglowColor = env.underglowColor;
+		targetUnderwaterCausticsColor = env.waterCausticsColor;
+		targetUnderwaterCausticsStrength = env.waterCausticsStrength;
+
+		// Prevent transitions from taking the long way around
+		for (int i = 0; i < 2; i++) {
+			float diff = startSunAngles[i] - targetSunAngles[i];
+			if (Math.abs(diff) > PI)
+				targetSunAngles[i] += TWO_PI * Math.signum(diff);
+		}
+
+		updateTargetSkyColor(); // Update every frame, since other plugins may control it
+
+		// interpolate between start and target values
+		long currentTime = System.currentTimeMillis();
+		// If time somehow skips backwards, abort the transition
+		if (currentTime < startTime)
+			startTime = 0;
+		float t = clamp((currentTime - startTime) / (float) TRANSITION_DURATION, 0, 1);
+		currentFogColor = hermite(startFogColor, targetFogColor, t);
+		currentWaterColor = hermite(startWaterColor, targetWaterColor, t);
+		currentFogDepth = hermite(startFogDepth, targetFogDepth, t);
+		currentAmbientStrength = hermite(startAmbientStrength, targetAmbientStrength, t);
+		currentAmbientColor = hermite(startAmbientColor, targetAmbientColor, t);
+		currentDirectionalStrength = hermite(startDirectionalStrength, targetDirectionalStrength, t);
+		currentDirectionalColor = hermite(startDirectionalColor, targetDirectionalColor, t);
+		currentUnderglowStrength = hermite(startUnderglowStrength, targetUnderglowStrength, t);
+		currentUnderglowColor = hermite(startUnderglowColor, targetUnderglowColor, t);
+		currentGroundFogStart = hermite(startGroundFogStart, targetGroundFogStart, t);
+		currentGroundFogEnd = hermite(startGroundFogEnd, targetGroundFogEnd, t);
+		currentGroundFogOpacity = hermite(startGroundFogOpacity, targetGroundFogOpacity, t);
+		for (int i = 0; i < 2; i++)
+			currentSunAngles[i] = hermite(startSunAngles[i], targetSunAngles[i], t);
+		currentUnderwaterCausticsColor = hermite(startUnderwaterCausticsColor, targetUnderwaterCausticsColor, t);
+		currentUnderwaterCausticsStrength = hermite(startUnderwaterCausticsStrength, targetUnderwaterCausticsStrength, t);
+
+		updateLightning();
+		forcedEnvironment = true;
+
+	}
+
 	/**
 	 * Updates variables used in transition effects
 	 *
 	 * @param newEnvironment the new environment to transition to
 	 * @param skipTransition whether the transition should be done instantly
 	 */
-	private void changeEnvironment(Environment newEnvironment, boolean skipTransition) {
+	public void changeEnvironment(Environment newEnvironment, boolean skipTransition) {
+		if (forcedEnvironment) {
+			return;
+		}
 		if (currentEnvironment == newEnvironment)
 			return;
 
