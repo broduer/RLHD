@@ -1,5 +1,7 @@
 package rs117.hd.tooling.enviroment;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
@@ -36,12 +38,11 @@ import rs117.hd.scene.EnvironmentManager;
 import rs117.hd.scene.environments.Environment;
 import rs117.hd.tooling.enviroment.components.ComponentData;
 import rs117.hd.tooling.enviroment.components.impl.CheckBox;
-import rs117.hd.tooling.enviroment.components.impl.ColorPicker;
-import rs117.hd.tooling.enviroment.components.impl.FloatSpinner;
-import rs117.hd.tooling.enviroment.components.impl.IntSpinner;
 import rs117.hd.utils.ColorUtils;
+import rs117.hd.utils.EnvironmentSerializer;
 
 import static rs117.hd.utils.ColorUtils.rgb;
+import static rs117.hd.utils.ResourcePath.path;
 
 @Slf4j
 public class EnvironmentEditor extends DevToolsFrame {
@@ -59,6 +60,8 @@ public class EnvironmentEditor extends DevToolsFrame {
 	private EnvironmentManager environmentManager;
 	@Inject
 	private Client client;
+
+	private List<String> editedEnvironments = new ArrayList<String>();
 
 	public RuneliteColorPicker colorPicker;
 
@@ -227,6 +230,7 @@ public class EnvironmentEditor extends DevToolsFrame {
 		final JButton refreshWidgetsBtn = new JButton("Reset");
 		refreshWidgetsBtn.addActionListener(e -> {
 			environmentManager.startUp();
+			editedEnvironments.clear();
 			updateView(Environment.DEFAULT);
 			environmentManager.forcedEnvironment = false;
 		});
@@ -241,7 +245,9 @@ public class EnvironmentEditor extends DevToolsFrame {
 		bottomPanel.add(forceEnvironment);
 
 		final JButton revalidateWidget = new JButton("Save");
-
+		revalidateWidget.addActionListener(e -> {
+			save();
+		});
 		bottomPanel.add(revalidateWidget);
 
 		final JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treeScrollPane, infoScrollPane);
@@ -257,6 +263,22 @@ public class EnvironmentEditor extends DevToolsFrame {
 
 		pack();
 		super.open();
+	}
+
+	public void save() {
+		editedEnvironments.forEach(name -> System.out.println("EDITED: " + name));
+		try {
+			Gson gson = new GsonBuilder()
+				.setPrettyPrinting()
+				.registerTypeAdapter(Environment.class, new EnvironmentSerializer())
+				.serializeNulls()
+				.create();
+
+			path("src/main/resources/rs117/hd/scene/environments.json")
+				.writeString(gson.toJson(environmentManager.environments));
+		} catch (Exception e) {
+
+		}
 	}
 
 	public void createAttrPanel() {
@@ -340,6 +362,9 @@ public class EnvironmentEditor extends DevToolsFrame {
 		BiConsumer<Environment, Object> setter = properties.get(key).getSetter();
 		if (setter != null) {
 			setter.accept(targetEnvironment, value);
+			if (!editedEnvironments.contains(targetEnvironment.name())) {
+				editedEnvironments.add(targetEnvironment.name());
+			}
 			if (client.getGameState() == GameState.LOGGED_IN) {
 				clientThread.invoke(() -> environmentManager.reset());
 			}
