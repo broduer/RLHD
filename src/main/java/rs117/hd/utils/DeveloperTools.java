@@ -3,7 +3,6 @@ package rs117.hd.utils;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import javax.inject.Inject;
-import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.events.*;
 import net.runelite.client.config.Keybind;
@@ -133,9 +132,7 @@ public class DeveloperTools implements KeyListener {
 	}
 
 	public void openEditor() {
-		SwingUtilities.invokeLater(() -> {
-			environmentEditor.open();
-		});
+		environmentEditor.open();
 	}
 
 	@Override
