@@ -2,7 +2,6 @@ package rs117.hd.tooling.enviroment.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.Inject;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -11,9 +10,6 @@ import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -33,10 +29,10 @@ import rs117.hd.data.environments.Area;
 import rs117.hd.scene.EnvironmentManager;
 import rs117.hd.scene.environments.Environment;
 import rs117.hd.tooling.enviroment.EnvironmentEditor;
+import rs117.hd.tooling.enviroment.EnvironmentSerializer;
 import rs117.hd.tooling.enviroment.NodeData;
 import rs117.hd.tooling.enviroment.components.ComponentData;
 import rs117.hd.tooling.enviroment.components.impl.CheckBox;
-import rs117.hd.utils.EnvironmentSerializer;
 
 import static rs117.hd.utils.ResourcePath.path;
 
