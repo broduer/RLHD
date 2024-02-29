@@ -26,6 +26,7 @@ package rs117.hd.utils;
 
 import java.util.HashSet;
 import java.util.Random;
+import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
@@ -47,9 +48,6 @@ public class HDUtils {
 	public static final long GiB = MiB * KiB;
 	public static final Random rand = new Random();
 
-	// directional vectors approximately opposite of the directional light used by the client
-	private static final float[] LIGHT_DIR_TILE = new float[] { 0.70710678f, 0.70710678f, 0f };
-
 	// The epsilon for floating point values used by jogl
 	public static final float EPSILON = 1.1920929E-7f;
 
@@ -57,6 +55,11 @@ public class HDUtils {
 	public static final float TWO_PI = PI * 2;
 	public static final float HALF_PI = PI / 2;
 	public static final float QUARTER_PI = PI / 2;
+
+	public static final int MAX_SNOW_LIGHTNESS = 70;
+
+	// directional vectors approximately opposite of the directional light used by the client
+	private static final float[] LIGHT_DIR_TILE = new float[] { 0.70710678f, 0.70710678f, 0f };
 
 	/**
 	 * Computes a + b, storing it in the out array
@@ -136,6 +139,21 @@ public class HDUtils {
 		for (int i = 0; i < result.length; i++)
 			result[i] = hermite(from[i], to[i], t);
 		return result;
+	}
+
+	public static double fract(double x) {
+		return mod(x, 1);
+	}
+
+	public static float fract(float x) {
+		return mod(x, 1);
+	}
+
+	/**
+	 * Modulo that returns the answer with the same sign as the modulus.
+	 */
+	public static double mod(double x, double modulus) {
+		return (x - Math.floor(x / modulus) * modulus);
 	}
 
 	/**
@@ -324,6 +342,9 @@ public class HDUtils {
 		return localToWorld(client.getScene(), localX, localY, plane);
 	}
 
+	/**
+	 * The returned plane may be different, so it's not safe to use for indexing into overlay IDs for instance
+	 */
 	public static int[] localToWorld(Scene scene, int localX, int localY, int plane) {
 		int sceneX = localX / LOCAL_TILE_SIZE;
 		int sceneY = localY / LOCAL_TILE_SIZE;
@@ -423,6 +444,7 @@ public class HDUtils {
 		return false;
 	}
 
+	@Nonnull
 	public static int[] getSouthWesternMostTileColor(Tile tile) {
 		var paint = tile.getSceneTilePaint();
 		var model = tile.getSceneTileModel();
@@ -453,6 +475,6 @@ public class HDUtils {
 			return ColorUtils.unpackHslRaw(hsl);
 		}
 
-		return null;
+		return new int[3];
 	}
 }

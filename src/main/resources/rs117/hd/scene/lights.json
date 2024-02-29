@@ -18144,22 +18144,41 @@
     ]
   },
   {
-    "description": "CHAOS_ELEMENTAL_JR",
-    "height": 250,
+    "description": "CHAOS_ELEMENTAL_JR_TOP",
+    "height": 225,
     "alignment": "CENTER",
-    "radius": 150,
-    "strength": 20,
+    "radius": 50,
+    "strength": 15,
     "color": [
       255,
       255,
       255
     ],
     "type": "FLICKER",
-    "duration": 0,
-    "range": 80,
+    "duration": 20,
+    "range": 20,
     "npcIds": [
-      5907,
-      2055
+      2055,
+      5907
+    ]
+  },
+  {
+    "description": "CHAOS_ELEMENTAL_JR_BOTTOM",
+    "height": 182,
+    "alignment": "CENTER",
+    "radius": 75,
+    "strength": 15,
+    "color": [
+      150,
+      120,
+      200
+    ],
+    "type": "FLICKER",
+    "duration": 20,
+    "range": 0,
+    "npcIds": [
+      2055,
+      5907
     ]
   },
   {
@@ -19625,6 +19644,42 @@
     ]
   },
   {
+    "description": "PEST_CONTROL_TORCHER_PROJECTILE",
+    "height": -150,
+    "alignment": "CENTER",
+    "radius": 150,
+    "strength": 8.5,
+    "color": [
+      252,
+      148,
+      3
+    ],
+    "type": "FLICKER",
+    "duration": 0,
+    "range": 20,
+    "projectileIds": [
+      647
+    ]
+  },
+  {
+    "description": "PEST_CONTROL_SHIFTER_PORTAL",
+    "height": 10,
+    "alignment": "CENTER",
+    "radius": 300,
+    "strength": 12,
+    "color": [
+      120,
+      24,
+      237
+    ],
+    "type": "FLICKER",
+    "duration": 0,
+    "range": 20,
+    "graphicsObjectIds": [
+      654
+    ]
+  },
+  {
     "description": "REVENANT_CYCLOPS",
     "height": 150,
     "alignment": "CENTER",
@@ -19884,7 +19939,8 @@
       5881,
       38555,
       33454
-    ]
+    ],
+    "visibleFromOtherPlanes": true
   },
   {
     "description": "STANDING_TORCH_SHORT_LARGE",
@@ -20202,7 +20258,8 @@
     "duration": 0,
     "range": 20,
     "objectIds": [
-      26180
+      26180,
+      30932
     ]
   },
   {
@@ -20237,7 +20294,6 @@
       5981,
       29085,
       25374,
-      33311,
       35810,
       35811,
       10660,
@@ -20645,7 +20701,7 @@
     "duration": 0,
     "range": 10,
     "objectIds": [
-      12805
+      12809
     ]
   },
   {
@@ -21117,9 +21173,9 @@
       79,
       177
     ],
-    "type": "STATIC",
+    "type": "FLICKER",
     "duration": 0,
-    "range": 0,
+    "range": 30,
     "objectIds": [
       26765
     ]
@@ -23415,7 +23471,6 @@
     "duration": 6200,
     "range": 30,
     "objectIds": [
-      14839,
       29495,
       29560,
       29228
@@ -24504,6 +24559,121 @@
     "range": 20,
     "objectIds": [
       38451
+    ],
+    "visibleFromOtherPlanes": true
+  },
+  {
+    "description": "HALLOWED_SEPULCHRE_PORTAL_FRAME",
+    "height": 200,
+    "alignment": "CENTER",
+    "radius": 800,
+    "strength": 5,
+    "color": [
+      0,
+      0,
+      255
+    ],
+    "type": "PULSE",
+    "duration": 1000,
+    "range": 10,
+    "objectIds": [
+      38829
+    ]
+  },
+  {
+    "description": "HALLOWED_SEPULCHRE_BRAZIERS",
+    "height": 152,
+    "alignment": "CENTER",
+    "radius": 400,
+    "strength": 5,
+    "color": [
+      0,
+      0,
+      255
+    ],
+    "type": "PULSE",
+    "duration": 1000,
+    "range": 10,
+    "objectIds": [
+      38798,
+      38801
+    ]
+  },
+  {
+    "description": "HALLOWED_SEPULCHRE_BRAZIER_GATE",
+    "height": 150,
+    "alignment": "CENTER",
+    "radius": 400,
+    "strength": 5,
+    "color": [
+      0,
+      0,
+      255
+    ],
+    "type": "PULSE",
+    "duration": 600,
+    "range": 10,
+    "objectIds": [
+      38798,
+      38801,
+      38804,
+      39540
+    ]
+  },
+  {
+    "description": "HALLOWED_SEPULCHRE_STRANGE_TILE_BLUE",
+    "height": 50,
+    "alignment": "CENTER",
+    "radius": 200,
+    "strength": 25,
+    "color": "#5577ff",
+    "graphicsObjectIds": [
+      1799
+    ]
+  },
+  {
+    "description": "HALLOWED_SEPULCHRE_STRANGE_TILE_YELLOW",
+    "height": 50,
+    "alignment": "CENTER",
+    "radius": 200,
+    "strength": 5,
+    "color": "#ffff00",
+    "graphicsObjectIds": [
+      1800
+    ]
+  },
+  {
+    "description": "HALLOWED_SEPULCHRE_WIZARD_STATUE_FLAMES_START_AND_END",
+    "height": 350,
+    "alignment": "CENTER",
+    "radius": 500,
+    "strength": 3,
+    "color": "#b15d00",
+    "type": "FLICKER",
+    "range": 50,
+    "objectIds": [
+      38427
+    ],
+    "animationIds": [
+      8660,
+      8663
+    ]
+  },
+  {
+    "description": "HALLOWED_SEPULCHRE_WIZARD_STATUE_FLAMES_MIDDLE",
+    "height": 350,
+    "alignment": "CENTER",
+    "radius": 500,
+    "strength": 15,
+    "color": "#b15d00",
+    "type": "FLICKER",
+    "range": 50,
+    "objectIds": [
+      38427
+    ],
+    "animationIds": [
+      8661,
+      8662
     ]
   },
   {
@@ -24743,11 +24913,55 @@
     "duration": 1550,
     "range": 20,
     "objectIds": [
-      34748
+      34748,
+      34749,
+      34752,
+      34751,
+      34754,
+      34756,
+      34755
     ]
   },
   {
-    "description": "AIR_ALTAR_PILLAR",
+    "description": "NATURE_WATER_ALTAR_PORTAL_AND_PILLARS",
+    "height": 250,
+    "alignment": "CENTER",
+    "radius": 450,
+    "strength": 10,
+    "color": [
+      50,
+      50,
+      255
+    ],
+    "type": "PULSE",
+    "duration": 1550,
+    "range": 20,
+    "objectIds": [
+      34750,
+      34791
+    ]
+  },
+  {
+    "description": "BODY_ALTER_PILLARS_AND_PORTAL",
+    "height": 250,
+    "alignment": "CENTER",
+    "radius": 450,
+    "strength": 5,
+    "color": [
+      255,
+      50,
+      200
+    ],
+    "type": "PULSE",
+    "duration": 1550,
+    "range": 20,
+    "objectIds": [
+      34793,
+      34753
+    ]
+  },
+  {
+    "description": "COSMIC_AIR_ALTAR_PILLAR_AND_ORBS",
     "height": 250,
     "alignment": "CENTER",
     "radius": 300,
@@ -24762,6 +24976,42 @@
     "range": 20,
     "objectIds": [
       34790
+    ]
+  },
+  {
+    "description": "COSMIC_AIR_ALTAR_PILLAR_AND_ORBS",
+    "height": 250,
+    "alignment": "CENTER",
+    "radius": 300,
+    "strength": 5,
+    "color": [
+      255,
+      255,
+      255
+    ],
+    "type": "PULSE",
+    "duration": 1000,
+    "range": 20,
+    "objectIds": [
+      34794
+    ]
+  },
+  {
+    "description": "FIRE_ALTAR_ORBS",
+    "height": 250,
+    "alignment": "CENTER",
+    "radius": 400,
+    "strength": 10,
+    "color": [
+      255,
+      20,
+      20
+    ],
+    "type": "PULSE",
+    "duration": 650,
+    "range": 20,
+    "objectIds": [
+      34792
     ]
   },
   {
@@ -24814,7 +25064,7 @@
     "description": "MAGIC_GUILD_ORBS",
     "height": 250,
     "alignment": "CENTER",
-    "radius": 250,
+    "radius": 300,
     "strength": 10,
     "color": [
       255,
@@ -24822,28 +25072,10 @@
       255
     ],
     "type": "PULSE",
-    "duration": 500,
+    "duration": 800,
     "range": 20,
     "objectIds": [
       34789
-    ]
-  },
-  {
-    "description": "MAGIC_GUILD_ORBS_BLUE",
-    "height": 250,
-    "alignment": "CENTER",
-    "radius": 250,
-    "strength": 10,
-    "color": [
-      0,
-      0,
-      255
-    ],
-    "type": "PULSE",
-    "duration": 500,
-    "range": 20,
-    "objectIds": [
-      34791
     ]
   },
   {
@@ -25719,12 +25951,12 @@
   },
   {
     "description": "IBAN_BLAST",
-    "radius": 200,
-    "strength": 7.5,
+    "radius": 250,
+    "strength": 8.8,
     "color": [
       255,
-      175,
-      84
+      0,
+      0
     ],
     "type": "STATIC",
     "duration": 0,
@@ -25783,6 +26015,23 @@
     "fadeInDuration": 1000,
     "projectileIds": [
       1252
+    ]
+  },
+  {
+    "description": "WARPED_SCEPTER_SPELL",
+    "alignment": "CENTER",
+    "radius": 150,
+    "strength": 10,
+    "color": [
+      170,
+      20,
+      255
+    ],
+    "type": "FLICKER",
+    "duration": 0,
+    "range": 10,
+    "projectileIds": [
+      2569
     ]
   },
   {
@@ -26552,6 +26801,50 @@
     "objectIds": [
       43729,
       38044
+    ]
+  },
+  {
+    "description": "ABYSSAL_NEXUS_TENDRILS_THRONE",
+    "height": 65,
+    "alignment": "CENTER",
+    "radius": 600,
+    "strength": 5,
+    "color": [
+      70,
+      242,
+      31
+    ],
+    "type": "FLICKER",
+    "duration": 2000,
+    "range": 20,
+    "objectIds": [
+      27005,
+      26984,
+      26985,
+      26986,
+      27004,
+      27006,
+      27014,
+      27015,
+      27016
+    ]
+  },
+  {
+    "description": "ABYSSAL_NEXUS_FONT",
+    "height": 140,
+    "alignment": "BACK",
+    "radius": 1200,
+    "strength": 12.5,
+    "color": [
+      70,
+      242,
+      31
+    ],
+    "type": "PULSE",
+    "duration": 4000,
+    "range": 28,
+    "objectIds": [
+      27029
     ]
   },
   {
@@ -28581,7 +28874,7 @@
     "worldX": 3375,
     "worldY": 11489,
     "plane": 0,
-    "height": 200,
+    "height": 500,
     "alignment": "CENTER",
     "radius": 2400,
     "strength": 3,
@@ -28592,14 +28885,14 @@
     ],
     "type": "PULSE",
     "duration": 7000,
-    "range": 10
+    "range": 30
   },
   {
     "description": "GIANTS_FOUNDRY_LAVA_2",
     "worldX": 3379,
     "worldY": 11490,
     "plane": 0,
-    "height": 200,
+    "height": 500,
     "alignment": "CENTER",
     "radius": 2400,
     "strength": 3,
@@ -28610,14 +28903,14 @@
     ],
     "type": "PULSE",
     "duration": 7000,
-    "range": 10
+    "range": 30
   },
   {
     "description": "GIANTS_FOUNDRY_LAVA_3",
     "worldX": 3385,
     "worldY": 11490,
     "plane": 0,
-    "height": 200,
+    "height": 500,
     "alignment": "CENTER",
     "radius": 2400,
     "strength": 3,
@@ -28628,16 +28921,16 @@
     ],
     "type": "PULSE",
     "duration": 7000,
-    "range": 10
+    "range": 30
   },
   {
     "description": "GIANTS_FOUNDRY_LAVA_4",
     "worldX": 3374,
     "worldY": 11497,
     "plane": 0,
-    "height": 200,
+    "height": 500,
     "alignment": "CENTER",
-    "radius": 2400,
+    "radius": 800,
     "strength": 3,
     "color": [
       255,
@@ -28646,14 +28939,14 @@
     ],
     "type": "PULSE",
     "duration": 7000,
-    "range": 10
+    "range": 30
   },
   {
     "description": "GIANTS_FOUNDRY_LAVA_5",
     "worldX": 3374,
     "worldY": 11501,
     "plane": 0,
-    "height": 200,
+    "height": 500,
     "alignment": "CENTER",
     "radius": 2400,
     "strength": 3,
@@ -28664,14 +28957,14 @@
     ],
     "type": "PULSE",
     "duration": 7000,
-    "range": 10
+    "range": 30
   },
   {
     "description": "GIANTS_FOUNDRY_LAVA_6",
     "worldX": 3374,
     "worldY": 11505,
     "plane": 0,
-    "height": 200,
+    "height": 500,
     "alignment": "CENTER",
     "radius": 2400,
     "strength": 3,
@@ -28682,14 +28975,14 @@
     ],
     "type": "PULSE",
     "duration": 7000,
-    "range": 10
+    "range": 30
   },
   {
     "description": "GIANTS_FOUNDRY_LAVA_7",
     "worldX": 3368,
     "worldY": 11503,
     "plane": 0,
-    "height": 200,
+    "height": 500,
     "alignment": "CENTER",
     "radius": 2400,
     "strength": 3,
@@ -28700,14 +28993,14 @@
     ],
     "type": "PULSE",
     "duration": 7000,
-    "range": 10
+    "range": 30
   },
   {
     "description": "GIANTS_FOUNDRY_LAVA_8",
     "worldX": 3378,
     "worldY": 11508,
     "plane": 0,
-    "height": 200,
+    "height": 500,
     "alignment": "CENTER",
     "radius": 2400,
     "strength": 3,
@@ -28718,14 +29011,14 @@
     ],
     "type": "PULSE",
     "duration": 7000,
-    "range": 10
+    "range": 30
   },
   {
     "description": "GIANTS_FOUNDRY_LAVA_9",
     "worldX": 3378,
     "worldY": 11503,
     "plane": 0,
-    "height": 200,
+    "height": 500,
     "alignment": "CENTER",
     "radius": 2400,
     "strength": 3,
@@ -28736,7 +29029,143 @@
     ],
     "type": "PULSE",
     "duration": 7000,
-    "range": 10
+    "range": 30
+  },
+  {
+    "description": "GIANTS_FOUNDRY_LAVA_SHORE_1",
+    "worldX": 3372,
+    "worldY": 11496,
+    "plane": 0,
+    "height": 250,
+    "alignment": "CENTER",
+    "radius": 1200,
+    "strength": 8,
+    "color": [
+      235,
+      20,
+      0
+    ],
+    "type": "STATIC",
+    "range": 200
+  },
+  {
+    "description": "GIANTS_FOUNDRY_LAVA_SHORE_2",
+    "worldX": 3372,
+    "worldY": 11499,
+    "plane": 0,
+    "height": 250,
+    "alignment": "CENTER",
+    "radius": 1200,
+    "strength": 8,
+    "color": [
+      235,
+      20,
+      0
+    ],
+    "type": "STATIC",
+    "range": 200
+  },
+  {
+    "description": "GIANTS_FOUNDRY_LAVA_SHORE_3",
+    "worldX": 3371,
+    "worldY": 11501,
+    "plane": 0,
+    "height": 250,
+    "alignment": "CENTER",
+    "radius": 1200,
+    "strength": 8,
+    "color": [
+      235,
+      20,
+      0
+    ],
+    "type": "STATIC",
+    "range": 200
+  },
+  {
+    "description": "GIANTS_FOUNDRY_LAVA_SHORE_4",
+    "worldX": 3373,
+    "worldY": 11496,
+    "plane": 0,
+    "height": 150,
+    "alignment": "CENTER",
+    "radius": 1000,
+    "strength": 15,
+    "color": [
+      235,
+      20,
+      0
+    ],
+    "type": "STATIC",
+    "range": 200
+  },
+  {
+    "description": "GIANTS_FOUNDRY_LAVA_SHORE_5",
+    "worldX": 3374,
+    "worldY": 11495,
+    "plane": 0,
+    "height": 65,
+    "alignment": "CENTER",
+    "radius": 450,
+    "strength": 15,
+    "color": [
+      235,
+      20,
+      0
+    ],
+    "type": "STATIC",
+    "range": 150
+  },
+  {
+    "description": "GIANTS_FOUNDRY_LAVA_SHORE_6",
+    "worldX": 3373,
+    "worldY": 11490,
+    "plane": 0,
+    "height": 85,
+    "alignment": "CENTER",
+    "radius": 1000,
+    "strength": 15,
+    "color": [
+      235,
+      20,
+      0
+    ],
+    "type": "STATIC",
+    "range": 250
+  },
+  {
+    "description": "GIANTS_FOUNDRY_LAVA_SHORE_7",
+    "worldX": 3374,
+    "worldY": 11488,
+    "plane": 0,
+    "height": 100,
+    "alignment": "CENTER",
+    "radius": 1000,
+    "strength": 15,
+    "color": [
+      235,
+      20,
+      0
+    ],
+    "type": "STATIC",
+    "range": 200
+  },
+  {
+    "description": "GIANTS_FOUNDRY_LAVA_SHORE_8",
+    "worldX": 3376,
+    "worldY": 11488,
+    "plane": 0,
+    "height": 150,
+    "alignment": "CENTER",
+    "radius": 1000,
+    "strength": 15,
+    "color": [
+      235,
+      20,
+      0
+    ],
+    "type": "STATIC",
+    "range": 200
   },
   {
     "description": "GIANTS_FOUNDRY_DOORWAY",
@@ -28755,6 +29184,42 @@
     "type": "FLICKER",
     "duration": 0,
     "range": 0
+  },
+  {
+    "description": "GIANTS_FOUNDRY_CRUCIBLE",
+    "height": 270,
+    "alignment": "CENTER",
+    "radius": 130,
+    "strength": 40,
+    "color": [
+      255,
+      182,
+      38
+    ],
+    "objectIds": [
+      44624
+    ],
+    "type": "PULSE",
+    "duration": 7000,
+    "range": 30
+  },
+  {
+    "description": "GIANTS_FOUNDRY_POURED_METAL_MOULD_JIG",
+    "height": 100,
+    "alignment": "CENTER",
+    "radius": 130,
+    "strength": 12,
+    "color": [
+      255,
+      182,
+      38
+    ],
+    "objectIds": [
+      44627
+    ],
+    "type": "PULSE",
+    "duration": 7000,
+    "range": 30
   },
   {
     "description": "LOVAKITE_FURNACE",
@@ -30443,6 +30908,42 @@
     ]
   },
   {
+    "description": "ZANARIS_GREEN_MUSHROOM_CEILING",
+    "height": 290,
+    "alignment": "CENTER",
+    "radius": 100,
+    "strength": 6.25,
+    "color": [
+      180,
+      255,
+      175
+    ],
+    "type": "FLICKER",
+    "duration": 1250,
+    "range": 20,
+    "objectIds": [
+      12020
+    ]
+  },
+  {
+    "description": "ZANARIS_GREEN_LAMP_CEILING",
+    "height": 315,
+    "alignment": "CENTER",
+    "radius": 100,
+    "strength": 7.25,
+    "color": [
+      180,
+      255,
+      175
+    ],
+    "type": "FLICKER",
+    "duration": 1250,
+    "range": 20,
+    "objectIds": [
+      12021
+    ]
+  },
+  {
     "description": "RED_MUSHROOM_WALL",
     "height": 132,
     "alignment": "FRONT",
@@ -30459,6 +30960,24 @@
     "objectIds": [
       12010,
       12012
+    ]
+  },
+  {
+    "description": "ZANARIS_RED_MUSHROOM_CEILING",
+    "height": 290,
+    "alignment": "CENTER",
+    "radius": 110,
+    "strength": 29.25,
+    "color": [
+      225,
+      30,
+      0
+    ],
+    "type": "FLICKER",
+    "duration": 1250,
+    "range": 20,
+    "objectIds": [
+      12019
     ]
   },
   {
@@ -31248,19 +31767,18 @@
   },
   {
     "description": "Weiss Magic Fire",
-    "height": 50,
+    "height": 300,
     "alignment": "CENTER",
-    "radius": 650,
-    "strength": 16.5,
+    "radius": 500,
+    "strength": 1,
     "color": [
       252,
       148,
       3
     ],
     "type": "FLICKER",
-    "duration": 0,
-    "range": 20,
-    "objectIds": [ 33333 ]
+    "range": 10,
+    "objectIds": [ 33311 ]
   },
   {
     "description": "Weiss Saltmine Entrance",
@@ -31429,5 +31947,874 @@
     "duration": 0,
     "range": 25,
     "objectIds": [ 46269 ]
+  },
+  {
+    "description": "FIRE_OF_DOMINATION",
+    "height": 300,
+    "radius": 500,
+    "strength": 3,
+    "color": "#ea008e",
+    "type": "FLICKER",
+    "range": 10,
+    "objectIds": [
+      33318
+    ]
+  },
+  {
+    "description": "FIRE_OF_NOURISHMENT",
+    "height": 300,
+    "radius": 500,
+    "strength": 3,
+    "color": [ 11, 252, 3 ],
+    "type": "FLICKER",
+    "range": 10,
+    "objectIds": [
+      33319
+    ]
+  },
+  {
+    "description": "FIRE_OF_ETERNAL_LIGHT",
+    "height": 300,
+    "radius": 850,
+    "strength": 5,
+    "color": "#ffffff",
+    "type": "FLICKER",
+    "range": 10,
+    "objectIds": [
+      33320
+    ]
+  },
+  {
+    "description": "FIRE_OF_UNSEASONAL_WARMTH",
+    "height": 300,
+    "radius": 750,
+    "strength": 2.5,
+    "color": [ 255, 85, 0 ],
+    "type": "FLICKER",
+    "range": 10,
+    "objectIds": [
+      33321
+    ]
+  },
+  {
+    "description": "FIRE_OF_DEHUMIDIFICATION",
+    "height": 300,
+    "radius": 750,
+    "strength": 4,
+    "color": [ 219, 252, 3 ],
+    "type": "FLICKER",
+    "range": 10,
+    "objectIds": [
+      33322
+    ]
+  },
+  {
+    "description": "WALL_TORCH_DAGANNOTH_KINGS",
+    "height": 200,
+    "radius": 1000,
+    "strength": 12.5,
+    "color": [
+      252,
+      148,
+      3
+    ],
+    "type": "FLICKER",
+    "duration": 0,
+    "range": 23,
+    "objectIds": [
+      10185
+    ]
+  },
+  {
+    "description": "Weiss Saltmine Entrance",
+    "worldX": 3595,
+    "worldY": 10292,
+    "plane": 2,
+    "height": 144,
+    "alignment": "NORTHEAST_CORNER",
+    "radius": 550,
+    "strength": 10.5,
+    "color": [
+      252,
+      252,
+      252
+    ],
+    "type": "STATIC",
+    "duration": 7000,
+    "range": 10
+  },
+  {
+    "description": "SIMPLE_STOVE",
+    "height": 20,
+    "alignment": "CENTER",
+    "radius": 450,
+    "strength": 5,
+    "color": [
+      252,
+      148,
+      3
+    ],
+    "type": "FLICKER",
+    "duration": 0,
+    "range": 20,
+    "objectIds": [
+      32631
+    ]
+  },
+  {
+    "description": "SLEPE_WALL_CANDLE",
+    "height": 220,
+    "alignment": "CENTER",
+    "radius": 300,
+    "strength": 8.5,
+    "color": [
+      252,
+      148,
+      3
+    ],
+    "type": "FLICKER",
+    "duration": 0,
+    "range": 20,
+    "objectIds": [
+      13053
+    ]
+  },
+  {
+    "description": "TEMPLE_OF_LIGHT_WALL_LIGHT",
+    "height": 220,
+    "alignment": "CENTER",
+    "radius": 600,
+    "strength": 4.5,
+    "color": [
+      252,
+      252,
+      252
+    ],
+    "type": "FLICKER",
+    "duration": 0,
+    "range": 20,
+    "objectIds": [
+      9992
+    ]
+  },
+  {
+    "description": "TEMPLE_OF_LIGHT_LIGHTBEAM_WHITE",
+    "height": 150,
+    "alignment": "CENTER",
+    "radius": 300,
+    "strength": 3.5,
+    "color": [
+      252,
+      252,
+      252
+    ],
+    "type": "STATIC",
+    "duration": 0,
+    "range": 15,
+    "objectIds": [
+      9799
+    ]
+  },
+  {
+    "description": "TEMPLE_OF_LIGHT_LIGHTBEAM_YELLOW",
+    "height": 150,
+    "alignment": "CENTER",
+    "radius": 300,
+    "strength": 3.5,
+    "color": [
+      204,
+      252,
+      252
+    ],
+    "type": "STATIC",
+    "duration": 0,
+    "range": 15,
+    "objectIds": [
+      9801
+    ]
+  },
+  {
+    "description": "TEMPLE_OF_LIGHT_LIGHTBEAM_CYAN",
+    "height": 150,
+    "alignment": "CENTER",
+    "radius": 300,
+    "strength": 5,
+    "color": [
+      0,
+      173,
+      253
+    ],
+    "type": "STATIC",
+    "duration": 0,
+    "range": 15,
+    "objectIds": [ 9803 ]
+  },
+  {
+    "description": "TEMPLE_OF_LIGHT_LIGHTBEAM_GREEN",
+    "height": 150,
+    "alignment": "CENTER",
+    "radius": 300,
+    "strength": 2.5,
+    "color": [
+      0,
+      252,
+      0
+    ],
+    "type": "STATIC",
+    "duration": 0,
+    "range": 15,
+    "objectIds": [ 9802 ]
+  },
+  {
+    "description": "TEMPLE_OF_LIGHT_LIGHTBEAM_BLUE",
+    "height": 150,
+    "alignment": "CENTER",
+    "radius": 300,
+    "strength": 7.5,
+    "color": [
+      0,
+      0,
+      252
+    ],
+    "type": "STATIC",
+    "duration": 0,
+    "range": 15,
+    "objectIds": [ 9804 ]
+  },
+  {
+    "description": "TEMPLE_OF_LIGHT_LIGHTBEAM_RED",
+    "height": 150,
+    "alignment": "CENTER",
+    "radius": 300,
+    "strength": 4,
+    "color": [
+      252,
+      0,
+      0
+    ],
+    "type": "STATIC",
+    "duration": 0,
+    "range": 15,
+    "objectIds": [ 9800 ]
+  },
+  {
+    "description": "TEMPLE_OF_LIGHT_DOOR_OPEN",
+    "height": 200,
+    "alignment": "CENTER",
+    "radius": 300,
+    "strength": 7.5,
+    "color": [
+      252,
+      252,
+      252
+    ],
+    "type": "STATIC",
+    "duration": 0,
+    "range": 20,
+    "objectIds": [
+      9775
+    ]
+  },
+  {
+    "description": "ABYSS_COSMIC_PORTAL",
+    "height": 110,
+    "alignment": "CENTER",
+    "radius": 84,
+    "strength": 15,
+    "color": [
+      224,
+      222,
+      26
+    ],
+    "type": "PULSE",
+    "duration": 1689,
+    "range": 100,
+    "objectIds": [
+      24974
+    ]
+  },
+  {
+    "description": "ABYSS_BLOOD_PORTAL",
+    "height": 110,
+    "alignment": "CENTER",
+    "radius": 84,
+    "strength": 17,
+    "color": [
+      203,
+      34,
+      27
+    ],
+    "type": "PULSE",
+    "duration": 1686,
+    "range": 100,
+    "objectIds": [
+      43848
+    ]
+  },
+  {
+    "description": "ABYSS_FIRE_PORTAL",
+    "height": 110,
+    "alignment": "CENTER",
+    "radius": 84,
+    "strength": 18,
+    "color": [
+      168,
+      34,
+      21
+    ],
+    "type": "PULSE",
+    "duration": 1686,
+    "range": 100,
+    "objectIds": [
+      24971
+    ]
+  },
+  {
+    "description": "ABYSS_EARTH_PORTAL",
+    "height": 110,
+    "alignment": "CENTER",
+    "radius": 84,
+    "strength": 45,
+    "color": [
+      103,
+      79,
+      13
+    ],
+    "type": "PULSE",
+    "duration": 1686,
+    "range": 100,
+    "objectIds": [
+      24972
+    ]
+  },
+  {
+    "description": "ABYSS_BODY_PORTAL",
+    "height": 110,
+    "alignment": "CENTER",
+    "radius": 84,
+    "strength": 80,
+    "color": [
+      24,
+      32,
+      208
+    ],
+    "type": "PULSE",
+    "duration": 1686,
+    "range": 100,
+    "objectIds": [
+      24973
+    ]
+  },
+  {
+    "description": "ABYSS_MIND_PORTAL",
+    "height": 110,
+    "alignment": "CENTER",
+    "radius": 84,
+    "strength": 20,
+    "color": [
+      224,
+      136,
+      26
+    ],
+    "type": "PULSE",
+    "duration": 1686,
+    "range": 100,
+    "objectIds": [
+      25379
+    ]
+  },
+  {
+    "description": "ABYSS_AIR_PORTAL",
+    "height": 110,
+    "alignment": "CENTER",
+    "radius": 84,
+    "strength": 23,
+    "color": [
+      225,
+      224,
+      224
+    ],
+    "type": "PULSE",
+    "duration": 1686,
+    "range": 100,
+    "objectIds": [
+      25378
+    ]
+  },
+  {
+    "description": "ABYSS_SOUL_PORTAL",
+    "height": 160,
+    "alignment": "CENTER",
+    "radius": 84,
+    "strength": 35,
+    "color": [
+      150,
+      151,
+      218
+    ],
+    "type": "PULSE",
+    "duration": 1686,
+    "range": 100,
+    "objectIds": [
+      25377
+    ]
+  },
+  {
+    "description": "ABYSS_WATER_PORTAL",
+    "height": 160,
+    "alignment": "CENTER",
+    "radius": 84,
+    "strength": 80,
+    "color": [
+      21,
+      26,
+      168
+    ],
+    "type": "PULSE",
+    "duration": 1686,
+    "range": 100,
+    "objectIds": [
+      25376
+    ]
+  },
+  {
+    "description": "ABYSS_DEATH_PORTAL",
+    "height": 160,
+    "alignment": "CENTER",
+    "radius": 84,
+    "strength": 18,
+    "color": [
+      228,
+      225,
+      225
+    ],
+    "type": "PULSE",
+    "duration": 1686,
+    "range": 100,
+    "objectIds": [
+      25035
+    ]
+  },
+  {
+    "description": "ABYSS_LAW_PORTAL",
+    "height": 160,
+    "alignment": "CENTER",
+    "radius": 84,
+    "strength": 80,
+    "color": [
+      26,
+      34,
+      224
+    ],
+    "type": "PULSE",
+    "duration": 1686,
+    "range": 100,
+    "objectIds": [
+      25034
+    ]
+  },
+  {
+    "description": "ABYSS_CHAOS_PORTAL",
+    "height": 160,
+    "alignment": "CENTER",
+    "radius": 84,
+    "strength": 18,
+    "color": [
+      224,
+      168,
+      26
+    ],
+    "type": "PULSE",
+    "duration": 1686,
+    "range": 100,
+    "objectIds": [
+      24976
+    ]
+  },
+  {
+    "description": "ABYSS_NATURE_PORTAL",
+    "height": 160,
+    "alignment": "CENTER",
+    "radius": 84,
+    "strength": 65,
+    "color": [
+      17,
+      139,
+      21
+    ],
+    "type": "PULSE",
+    "duration": 1686,
+    "range": 100,
+    "objectIds": [
+      24975
+    ]
+  },
+  {
+    "description": "ABYSS_PORTAL",
+    "height": 160,
+    "alignment": "CENTER",
+    "radius": 1000,
+    "strength": 65,
+    "color": [
+      90,
+      16,
+      115
+    ],
+    "type": "STATIC",
+    "objectIds": [
+      26149
+    ]
+  },
+  {
+    "description": "RUNECRAFTING_YELLOW_PORTALS",
+    "height": 30,
+    "alignment": "CENTER",
+    "radius": 500,
+    "strength": 7.5,
+    "color": [
+      255,
+      216,
+      87
+    ],
+    "type": "PULSE",
+    "duration": 1550,
+    "range": 50,
+    "objectIds": [
+      34754,
+      34755,
+      34756
+    ]
+  },
+  {
+    "description": "RUNECRAFTING_PILLAR_LIGHTS_LAW",
+    "height": 260,
+    "alignment": "CENTER",
+    "radius": 500,
+    "strength": 7.5,
+    "color": [
+      26,
+      34,
+      224
+    ],
+    "type": "PULSE",
+    "duration": 1550,
+    "range": 50,
+    "objectIds": [
+      34794
+    ]
+  },
+  {
+    "description": "Abyss - SW Light",
+    "worldX": 3027,
+    "worldY": 4820,
+    "plane": 0,
+    "height": 2048,
+    "alignment": "CENTER",
+    "radius": 5120,
+    "strength": 50,
+    "color": [
+      66.7,
+      68.6,
+      71.4
+    ],
+    "type": "STATIC"
+  },
+  {
+    "description": "Abyss - SE Light",
+    "worldX": 3050,
+    "worldY": 4820,
+    "plane": 0,
+    "height": 2048,
+    "alignment": "CENTER",
+    "radius": 5120,
+    "strength": 50,
+    "color": [
+      66.7,
+      68.6,
+      71.4
+    ],
+    "type": "STATIC"
+  },
+  {
+    "description": "Abyss - NW Light",
+    "worldX": 3027,
+    "worldY": 4846,
+    "plane": 0,
+    "height": 2048,
+    "alignment": "CENTER",
+    "radius": 5120,
+    "strength": 50,
+    "color": [
+      66.7,
+      68.6,
+      71.4
+    ],
+    "type": "STATIC"
+  },
+  {
+    "description": "Abyss - NE Light",
+    "worldX": 3050,
+    "worldY": 4846,
+    "plane": 0,
+    "height": 2048,
+    "alignment": "CENTER",
+    "radius": 5120,
+    "strength": 50,
+    "color": [
+      66.7,
+      68.6,
+      71.4
+    ],
+    "type": "STATIC"
+  },
+  {
+    "description": "Defender of Varrock dungeon braziers",
+    "objectIds": [ 50170 ],
+    "height": 200,
+    "alignment": "CENTER",
+    "radius": 1200,
+    "strength": 10,
+    "color": [
+      252,
+      148,
+      3
+    ],
+    "type": "FLICKER",
+    "range": 7
+  },
+  {
+    "description": "Imcando Dream Theatre forge - Camdozaal",
+    "height": 100,
+    "alignment": "CENTER",
+    "radius": 1400,
+    "strength": 12.5,
+    "color": [ 10, 80, 190 ],
+    "type": "FLICKER",
+    "range": 30,
+    "objectIds": [
+      50101
+    ]
+  },
+  {
+    "description": "Defender of Varrock shield responds lightning spotanim",
+    "graphicsObjectIds": [ 2656 ],
+    "height": 200,
+    "alignment": "CENTER",
+    "radius": 500,
+    "strength": 12.5,
+    "color": [ 60, 110, 190 ],
+    "type": "FLICKER",
+    "range": 20
+  },
+  {
+    "description": "Defender of Varrock shield lightning attack - first part",
+    "height": 200,
+    "radius": 500,
+    "strength": 200,
+    "color": [ 60, 110, 190 ],
+    "type": "FLICKER",
+    "range": 20,
+    "objectIds": [ 50108 ],
+    "fadeInDuration": 150,
+    "fadeOutDuration": 300,
+    "spawnDelay": 3600,
+    "despawnDelay": 2100,
+    "fixedDespawnTime": true
+  },
+  {
+    "description": "Defender of Varrock shield lightning attack - second part",
+    "height": 200,
+    "radius": 500,
+    "strength": 200,
+    "color": [ 60, 110, 190 ],
+    "type": "FLICKER",
+    "range": 20,
+    "objectIds": [ 50109 ],
+    "fadeInDuration": 150,
+    "fadeOutDuration": 300,
+    "spawnDelay": 4050,
+    "despawnDelay": 1950,
+    "fixedDespawnTime": true
+  },
+  {
+    "description": "Defender of Varrock shield lightning attack - third part",
+    "height": 200,
+    "radius": 500,
+    "strength": 200,
+    "color": [ 60, 110, 190 ],
+    "type": "FLICKER",
+    "range": 20,
+    "objectIds": [ 50110 ],
+    "fadeInDuration": 150,
+    "fadeOutDuration": 300,
+    "spawnDelay": 4400,
+    "despawnDelay": 2050,
+    "fixedDespawnTime": true
+  },
+  {
+    "description": "Imbued heart lightning spotanim",
+    "graphicsObjectIds": [ 1316 ],
+    "height": 200,
+    "alignment": "CENTER",
+    "radius": 500,
+    "strength": 12.5,
+    "color": [ 178, 33, 50 ],
+    "type": "FLICKER",
+    "range": 20
+  },
+  {
+    "description": "Saturated heart lightning spotanim",
+    "graphicsObjectIds": [ 2287 ],
+    "height": 200,
+    "alignment": "CENTER",
+    "radius": 500,
+    "strength": 12.5,
+    "color": [ 218, 100, 207 ],
+    "type": "FLICKER",
+    "range": 20
+  },
+  {
+    "description": "CHAOS_ELEMENTAL_TOP_LIGHT",
+    "height": 325,
+    "alignment": "CENTER",
+    "radius": 200,
+    "strength": 5,
+    "color": [
+      255,
+      255,
+      255
+    ],
+    "type": "FLICKER",
+    "duration": 4,
+    "range": 75,
+    "npcIds": [
+      2054
+    ]
+  },
+  {
+    "description": "CHAOS_ELEMENTAL_BOTTOM_LIGHT",
+    "height": 50,
+    "alignment": "CENTER",
+    "radius": 450,
+    "strength": 20,
+    "color": [
+      150,
+      120,
+      200
+    ],
+    "type": "FLICKER",
+    "duration": 0,
+    "range": 20,
+    "npcIds": [
+      2054
+    ]
+  },
+  {
+    "description": "CHAOS_ELEMENTAL_TELE_PROJECTILE",
+    "height": 0,
+    "alignment": "CENTER",
+    "radius": 200,
+    "strength": 10,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "type": "FLICKER",
+    "duration": 0,
+    "range": 20,
+    "projectileIds": [
+      554
+    ]
+  },
+  {
+    "description": "CHAOS_ELEMENTAL_UNEQUIP_PROJECTILE",
+    "height": 0,
+    "alignment": "CENTER",
+    "radius": 175,
+    "strength": 10,
+    "color": [
+      0,
+      255,
+      0
+    ],
+    "type": "FLICKER",
+    "duration": 0,
+    "range": 20,
+    "projectileIds": [
+      551
+    ]
+  },
+  {
+    "description": "CHAOS_ELEMENTAL_DAMAGE_PROJECTILE",
+    "height": -10,
+    "alignment": "CENTER",
+    "radius": 200,
+    "strength": 10,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "type": "FLICKER",
+    "duration": 0,
+    "range": 100,
+    "projectileIds": [
+      557
+    ]
+  },
+  {
+    "description": "CHAOS_ELEMENTAL_DAMAGE_PROJECTILE_2",
+    "height": -10,
+    "alignment": "CENTER",
+    "radius": 150,
+    "strength": 10,
+    "color": [
+      0,
+      255,
+      0
+    ],
+    "type": "FLICKER",
+    "duration": 0,
+    "range": 100,
+    "projectileIds": [
+      557
+    ]
+  },
+  {
+    "description": "CHAOS_ELEMENTAL_DAMAGE_PROJECTILE_3",
+    "height": -10,
+    "alignment": "CENTER",
+    "radius": 125,
+    "strength": 10,
+    "color": [
+      0,
+      0,
+      255
+    ],
+    "type": "FLICKER",
+    "duration": 0,
+    "range": 100,
+    "projectileIds": [
+      557
+    ]
+  },
+  {
+    "description": "MINIATURE_CHAOTIC_CLOUDS",
+    "height": 150,
+    "alignment": "CENTER",
+    "radius": 150,
+    "strength": 12,
+    "color": [
+      150,
+      120,
+      200
+    ],
+    "type": "FLICKER",
+    "duration": 20,
+    "range": 0,
+    "npcIds": [
+      6620
+    ]
   }
 ]

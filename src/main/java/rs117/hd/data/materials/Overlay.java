@@ -29,6 +29,7 @@ import com.google.common.collect.ListMultimap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
@@ -40,12 +41,31 @@ import rs117.hd.config.SeasonalTheme;
 import rs117.hd.data.WaterType;
 import rs117.hd.data.environments.Area;
 import rs117.hd.scene.SceneUploader;
-import rs117.hd.utils.HDUtils;
+import rs117.hd.scene.tile_overrides.TileOverride;
 
+import static rs117.hd.utils.HDUtils.MAX_SNOW_LIGHTNESS;
+import static rs117.hd.utils.HDUtils.clamp;
+import static rs117.hd.utils.HDUtils.localToWorld;
+
+@Deprecated
 public enum Overlay {
 	// Winter Theme fixes
-	WINTER_GRASS(p -> p.ids().groundMaterial(GroundMaterial.SNOW_1).hue(0).saturation(0).shiftLightness(40).blended(true)),
-	WINTER_DIRT(p -> p.ids().groundMaterial(GroundMaterial.DIRT).hue(0).saturation(0).shiftLightness(40).blended(true)),
+	WINTER_GRASS(p -> p
+		.ids()
+		.groundMaterial(GroundMaterial.SNOW_1)
+		.hue(0)
+		.saturation(0)
+		.shiftLightness(40)
+		.maxLightness(MAX_SNOW_LIGHTNESS)
+		.blended(true)),
+	WINTER_DIRT(p -> p
+		.ids()
+		.groundMaterial(GroundMaterial.SNOW_2)
+		.hue(0)
+		.saturation(0)
+		.shiftLightness(40)
+		.maxLightness(MAX_SNOW_LIGHTNESS)
+		.blended(true)),
 	WINTER_JAGGED_STONE_TILE(p -> p
 		.ids()
 		.groundMaterial(GroundMaterial.WINTER_JAGGED_STONE_TILE)
@@ -62,8 +82,8 @@ public enum Overlay {
 		.ids()
 		.groundMaterial(GroundMaterial.SNOW_2)
 	),
-	WINTER_EAST_ARDOUGNE_CASTLE_PATH_FIX(10, Area.EAST_ARDOUGNE_CASTLE_PATH_FIX, GroundMaterial.VARROCK_PATHS, p -> p
-		.seasonalReplacement(SeasonalTheme.WINTER, WINTER_JAGGED_STONE_TILE_LIGHT)
+	WINTER_EAST_ARDOUGNE_CASTLE_PATH_FIX(p -> p
+		.ids()
 		.shiftLightness(3)
 		.blended(false)
 	),
@@ -71,6 +91,7 @@ public enum Overlay {
 		.seasonalReplacement(SeasonalTheme.WINTER, WINTER_DIRT)
 	),
 	DEFAULT_GRASS(p -> p.ids().groundMaterial(GroundMaterial.OVERWORLD_GRASS_1)),
+	VERTICAL_DIRT_FIX_NEAR_FALADOR(p -> p.ids(22).area(Area.VERTICAL_DIRT_FIX_NEAR_FALADOR).groundMaterial(GroundMaterial.VERTICAL_DIRT)),
 
 	// Tutorial Island
 	TUTORIAL_ISLAND_KITCHEN_TILE_1(9, Area.TUTORIAL_ISLAND_KITCHEN, GroundMaterial.MARBLE_1_SEMIGLOSS, p -> p.blended(false)),
@@ -133,6 +154,7 @@ public enum Overlay {
 	LUMBRIDGE_CASTLE_ENTRYWAY_2(3, Area.LUMBRIDGE_CASTLE_ENTRYWAY, GroundMaterial.MARBLE_2_GLOSS, p -> p.blended(false)),
 	LUMBRIDGE_CAVES_FLOOR(49, Area.LUMBRIDGE_SWAMP_CAVES, GroundMaterial.ROCKY_CAVE_FLOOR),
 	GOBLIN_MAZE_FLOOR(48, Area.GOBLIN_MAZE, GroundMaterial.ROCKY_CAVE_FLOOR),
+	LUMBRIDGE_CHRISTMAS_EVENT(263, Area.LUMBRIDGE, GroundMaterial.ICE_1),
 
 
 	//Varrock Indoors
@@ -194,6 +216,15 @@ public enum Overlay {
 	VARROCK_DIRT_BLENDING_IMPROVEMENT(-84, Area.VARROCK, GroundMaterial.DIRT, p -> p.shiftSaturation(1)),
 	// this tile is used by jagex to blend between dirt paths and regular paths; blending desaturates the dirt and looks bad, extra saturation cancels out the effect
 
+	VARROCK_SEWERS_BRICK_FLOOR(p -> p
+		.ids(27, 306)
+		.area(Area.VARROCK_SEWERS)
+		.groundMaterial(GroundMaterial.HD_BRICK_BROWN)
+		.lightness(86)
+		.uvOrientation(512)
+		.uvScale(1.5f)
+	),
+
 	// Barbarian Village
 	BARBARIAN_VILLAGE_EAST_PATH_FIX_1(83, Area.BARBARIAN_VILLAGE_EAST_PATH_FIX, GroundMaterial.DIRT, p -> p.shiftSaturation(2)),
 	BARBARIAN_VILLAGE_EAST_PATH_FIX_2(
@@ -209,14 +240,7 @@ public enum Overlay {
 	DIGSITE_DOCK(93, Area.DIGSITE_DOCK, GroundMaterial.TILES_2X2_1_GLOSS, p -> p.blended(false)),
 
 	// Al Kharid
-	OVERRIDE_SOPHANEM_CHURCH_FLOOR_FIX_1(21, Area.SOPHANEM_FLOORS, GroundMaterial.TILES_2X2_2_SEMIGLOSS, p -> p.blended(false)),
-	OVERRIDE_SOPHANEM_CHURCH_FLOOR_FIX_2(26, Area.SOPHANEM_FLOORS, GroundMaterial.TILES_2X2_2_SEMIGLOSS, p -> p.blended(false)),
-	SOPHANEM_SUNTRAP(p -> p
-		.ids(1)
-		.groundMaterial(GroundMaterial.MARBLE_2)
-		.area(Area.KHARID_DESERT_REGION)
-		.blended(false)
-		.shiftLightness(10)),
+	SORCERESS_GARDEN_UNDERWALL(p -> p.ids(26).area(Area.SORCERESS_GARDEN).blended(false)),
 	MAGE_TRAINING_ARENA_FLOOR(-122, Area.MAGE_TRAINING_ARENA, GroundMaterial.TILES_2X2_2_GLOSS, p -> p.blended(false)),
 	AL_KHARID_WELL_FIX(21, Area.AL_KHARID_WELL, GroundMaterial.DIRT, p -> p.blended(false)),
 	AL_KHARID_FLOOR_1(26, Area.AL_KHARID_BUILDINGS, GroundMaterial.TILES_2X2_2_SEMIGLOSS, p -> p
@@ -226,6 +250,41 @@ public enum Overlay {
 	AL_KHARID_FLOOR_2(1, Area.AL_KHARID_BUILDINGS, GroundMaterial.TILES_2X2_2_SEMIGLOSS, p -> p.blended(false)),
 	AL_KHARID_FLOOR_MARBLE_1(3, Area.AL_KHARID_BUILDINGS, GroundMaterial.MARBLE_2_SEMIGLOSS, p -> p.blended(false)),
 	AL_KHARID_FLOOR_MARBLE_2(4, Area.AL_KHARID_BUILDINGS, GroundMaterial.MARBLE_1_SEMIGLOSS, p -> p.blended(false)),
+	// Sophanem
+	SOPHANEM_PYRAMID_UNDERSIDE(p -> p.ids(26).area(Area.SOPHANEM_PYRAMIDS).groundMaterial(GroundMaterial.SAND).hue(6).saturation(3).shiftLightness(-10)),
+	OVERRIDE_SOPHANEM_CHURCH_FLOOR_21(21, Area.SOPHANEM_TEMPLE_FLOORS, GroundMaterial.TILES_2X2_2_SEMIGLOSS, p -> p.blended(false)),
+	OVERRIDE_SOPHANEM_CHURCH_FLOOR_26(26, Area.SOPHANEM_TEMPLE_FLOORS, GroundMaterial.TILES_2X2_2_SEMIGLOSS, p -> p.blended(false)),
+	SOPHANEM_INTERIOR_FLOORS(p -> p.ids(26).area(Area.SOPHANEM_BUILDING_FLOORS).groundMaterial(GroundMaterial.FALADOR_PATHS).shiftLightness(5).blended(false)),
+	SOPHANEM_SUNTRAP(p -> p
+		.ids(1)
+		.groundMaterial(GroundMaterial.MARBLE_2)
+		.area(Area.KHARID_DESERT_REGION)
+		.blended(false)
+		.shiftLightness(10)),
+	SOPHANEM_UPPER_FLOORS_CORRECTION(p -> p // The tiles in this area are supposed to be shaded, so the tiles are darker than intended as a result, this corrects it.
+		.ids(21)
+		.area(Area.SOPHANEM)
+		.groundMaterial(GroundMaterial.FALADOR_PATHS)
+		.shiftHue(1)
+		.shiftLightness(23)
+		.shiftSaturation(-5)
+	),
+	SOPHANEM_TEMPLE_LIGHTNESS_FIX_25(p -> p
+		.ids(25)
+		.area(Area.SOPHANEM_TEMPLE_UPPER_FLOORS)
+		.groundMaterial(GroundMaterial.FALADOR_PATHS)
+		.shiftHue(1)
+		.shiftSaturation(-1)
+		.lightness(40)),
+	SOPHANEM_TEMPLE_LIGHTNESS_FIX_26(p -> p
+		.ids(26)
+		.area(Area.SOPHANEM_TEMPLE_UPPER_FLOORS)
+		.groundMaterial(GroundMaterial.FALADOR_PATHS)
+		.lightness(40)),
+	SOPHANEM_UPPER_FLOORS(p -> p.ids(25).area(Area.SOPHANEM).groundMaterial(GroundMaterial.FALADOR_PATHS).shiftSaturation(-1)),
+	SOPHANEM_PATH(p -> p.ids(26).area(Area.SOPHANEM).groundMaterial(GroundMaterial.FALADOR_PATHS)),
+	SOPHANEM_UNDERGROUND_BANK_MARBLE(p -> p.ids(26).area(Area.SOPHANEM_TEMPLE_BANK).groundMaterial(GroundMaterial.MARBLE_2_SEMIGLOSS).blended(false).shiftLightness(10)),
+	// Kharidian Region
 	KHARID_PATHS_1(26, Area.KHARID_DESERT_REGION, GroundMaterial.DIRT, p -> p.saturation(2).hue(6).shiftLightness(5)),
 	KHARID_PATHS_2(76, Area.KHARID_DESERT_REGION, GroundMaterial.DIRT, p -> p.saturation(3).hue(6).shiftLightness(-10)),
 	KHARID_PATHS_3(25, Area.KHARID_DESERT_REGION, GroundMaterial.DIRT, p -> p.saturation(3).hue(6)),
@@ -280,6 +339,7 @@ public enum Overlay {
 	FALADOR_BUILDING_FLOOR_2(33, Area.FALADOR, GroundMaterial.MARBLE_1_GLOSS, p -> p.blended(false)),
 	FALADOR_BUILDING_FLOOR_3(77, Area.FALADOR, GroundMaterial.MARBLE_2_GLOSS, p -> p.blended(false)),
 	FALADOR_BUILDING_FLOOR_4(13, Area.FALADOR, GroundMaterial.NONE, p -> p.blended(false)),
+	GIANT_MOLE_LAIR_DIRT(p -> p.ids(42, 161).area(Area.GIANT_MOLE_LAIR).groundMaterial(GroundMaterial.VARIED_DIRT)),
 
 	// Port Sarim
 	PORT_SARIM_BETTYS_HOUSE_1(11, Area.PORT_SARIM_BETTYS_HOUSE, GroundMaterial.MARBLE_DARK, p -> p
@@ -346,6 +406,11 @@ public enum Overlay {
 		.blended(true)
 	),
 
+	// Abyss
+	ABYSSAL_FLOOR(p -> p.ids(42).area(Area.ABYSS).groundMaterial(GroundMaterial.ABYSSAL_FLOOR)),
+	ABYSSAL_LIQUID(p -> p.ids(66, 67).area(Area.ABYSS).waterType(WaterType.ABYSS_BILE)),
+
+
 	// Goblin Village
 	GOBLIN_VILLAGE_TILES_BLEND_FIX_OVERLAY(
 		Area.GOBLIN_VILLAGE_COOKS_CHAMBER_BLEND_FIX,
@@ -366,7 +431,7 @@ public enum Overlay {
 	WARRIORS_GUILD_CARPET(86, Area.WARRIORS_GUILD, GroundMaterial.CARPET, p -> p.blended(false)),
 
 	// Trollweiss Region
-	TROLLHEIM_WALLS(83, Area.TROLLHEIM, GroundMaterial.DIRT_VERT),
+	TROLLHEIM_WALLS(83, Area.TROLLHEIM, GroundMaterial.VERTICAL_DIRT),
 	WEISS_FIREPIT_FIX(171, Area.WEISS_FIRE_PIT, GroundMaterial.DIRT),
 	WEISS_TENT_INTERIOR(171, Area.INTERIOR_WEISS_THRONE_TENT, GroundMaterial.VARROCK_PATHS),
 	WEISS_SNOWY_PATH(171, Area.WEISS_REGION, GroundMaterial.WINTER_JAGGED_STONE_TILE),
@@ -384,7 +449,8 @@ public enum Overlay {
 		.area(Area.TAVERLEY_DUNGEON)
 		.ids(2, 10, 34)
 	),
-	ICE_QUEENS_SYMBOL(33, Area.ICE_QUEENS_DUNGEON, GroundMaterial.ICE_1),
+	ASGARNIA_MOUNTAINS_VERTICAL_DIRT_FIX(p -> p.ids(22).area(Area.ASGARNIA_MOUNTAINS).groundMaterial(GroundMaterial.VERTICAL_DIRT)),
+	ICE_QUEENS_SYMBOL(33, Area.ICE_QUEENS_DUNGEON, GroundMaterial.ICE_1_HIGHGLOSS),
 	ICE_QUEENS_DUNGEON_OVERLAY(Area.ICE_QUEENS_DUNGEON, GroundMaterial.SNOW_1, p -> p.ids(42).lightness(100).hue(0).saturation(0)),
 
 	// Seers Indoors
@@ -404,7 +470,7 @@ public enum Overlay {
 	SEERS_BANK_TILE_2(4, Area.SEERS_BANK, GroundMaterial.MARBLE_2_GLOSS, p -> p.blended(false)),
 	SEERS_BANK_TILE_3(8, Area.SEERS_BANK, GroundMaterial.MARBLE_1_GLOSS, p -> p.blended(false)),
 	SEERS_HOUSE_FLOORS(22, Area.SEERS_HOUSES, GroundMaterial.WOOD_PLANKS_1, p -> p
-		.replaceWithIf(null, pl -> !pl.configGroundTextures)
+		.replaceWithIf(null, "!textures")
 		.blended(false)
 		.lightness(45)
 		.saturation(2)
@@ -413,6 +479,7 @@ public enum Overlay {
 	SEERS_CHURCH_2(8, Area.SEERS_CHURCH, GroundMaterial.MARBLE_2, p -> p.blended(false)),
 	SEERS_COURTHOUSE_FLOOR(p -> p.area(Area.SEERS_COURTHOUSE).ids(110, 123).groundMaterial(GroundMaterial.FALADOR_PATHS)),
 	SINCLAIR_MANSION_FLOOR(173, Area.SINCLAIR_MANSION, GroundMaterial.WOOD_PLANKS_1, p -> p
+		.replaceWithIf(null, "!textures")
 		.lightness(40)
 		.hue(10)
 		.saturation(5)
@@ -442,10 +509,26 @@ public enum Overlay {
 	EAST_ARDOUGNE_COBBLE_DOCK_HOUSE(10, Area.EAST_ARDOUGNE_COBBLE_DOCK_HOUSE, GroundMaterial.VARROCK_PATHS),
 
 	// Ardougne
-	EAST_ARDOUGNE_PATH_FIXES(10, Area.EAST_ARDOUGNE_PATHING_FIXES, GroundMaterial.OVERWORLD_GRASS_1, p -> p
+	EAST_ARDOUGNE_PATH_BLENDING_FIX(p -> p
+		.ids()
+		.groundMaterial(GroundMaterial.OVERWORLD_GRASS_1)
 		.hue(11)
 		.saturation(4)
 		.lightness(21)
+	),
+	EAST_ARDOUGNE_PATH_BLENDING_FIX_TOGGLE_WINTER(p -> p
+		.ids()
+		.area(Area.EAST_ARDOUGNE_PATHING_FIXES)
+		.groundMaterial(GroundMaterial.WINTER_JAGGED_STONE_TILE_LIGHT)
+		.replaceWithIf(WINTER_GRASS, "blending")
+	),
+	EAST_ARDOUGNE_PATH_BLENDING_FIX_TOGGLE(p -> p
+		.ids(10)
+		.area(Area.EAST_ARDOUGNE_PATHING_FIXES)
+		.groundMaterial(GroundMaterial.VARROCK_PATHS)
+		.shiftLightness(6)
+		.seasonalReplacement(SeasonalTheme.WINTER, EAST_ARDOUGNE_PATH_BLENDING_FIX_TOGGLE_WINTER)
+		.replaceWithIf(EAST_ARDOUGNE_PATH_BLENDING_FIX, "blending")
 	),
 	EAST_ARDOUGNE_DOCKS_FIX_5(5, Area.EAST_ARDOUGNE_DOCKS_FIX, GroundMaterial.WOOD_PLANKS_1, p -> p.lightness(65)),
 	EAST_ARDOUGNE_DOCKS_FIX_35(35, Area.EAST_ARDOUGNE_DOCKS_FIX, GroundMaterial.WOOD_PLANKS_1, p -> p.lightness(65)),
@@ -453,16 +536,26 @@ public enum Overlay {
 	EAST_ARDOUGNE_CASTLE_DIRT_FIX(14, Area.EAST_ARDOUGNE_CASTLE_DIRT_FIX, GroundMaterial.DIRT, p -> p
 		.shiftLightness(7)
 		.blended(false)),
-	EAST_ARDOUGNE_CASTLE_PATH_FIX(10, Area.EAST_ARDOUGNE_CASTLE_PATH_FIX, GroundMaterial.VARROCK_PATHS, p -> p
-		.shiftLightness(16)
-		.blended(false)
-
-	),
 	EAST_ARDOUGNE_CASTLE_FLOOR_TEXTURE(
 		11,
 		Area.EAST_ARDOUGNE_CASTLE_DIRT_FIX,
 		GroundMaterial.CONCRETE,
 		p -> p.blended(false).lightness(40)
+	),
+	EAST_ARDOUGNE_CASTLE_PATH_FIX_BLENDING(p -> p
+		.ids()
+		.groundMaterial(GroundMaterial.VARROCK_PATHS)
+		.shiftLightness(16) // Disabling blending requires shifting the lightness up further, to match the color of paths with blending
+		.blended(false)
+	),
+	EAST_ARDOUGNE_CASTLE_PATH_FIX(p -> p
+		.ids(10)
+		.area(Area.EAST_ARDOUGNE_CASTLE_PATH_FIX)
+		.groundMaterial(GroundMaterial.VARROCK_PATHS)
+		.shiftLightness(6)
+		.blended(false)
+		.seasonalReplacement(SeasonalTheme.WINTER, WINTER_JAGGED_STONE_TILE_LIGHT)
+		.replaceWithIf(EAST_ARDOUGNE_CASTLE_PATH_FIX_BLENDING, "blending")
 	),
 	EAST_ARDOUGNE_PATHS_1(10, Area.EAST_ARDOUGNE, GroundMaterial.VARROCK_PATHS, p -> p
 		.shiftLightness(6)
@@ -493,6 +586,9 @@ public enum Overlay {
 		.blended(false)
 		.ids(9, 11, 13, 18)
 	),
+
+	WITCHAVEN_PATHS(p -> p.ids(106).area(Area.WITCHAVEN).groundMaterial(GroundMaterial.VARIED_DIRT)),
+
 	KHAZARD_BATTLEFIELD_COBBLE_INDOORS(11, Area.KHAZARD_BATTLEFIELD_COBBLE, GroundMaterial.VARROCK_PATHS),
 	KHAZARD_BATTLEFIELD_COBBLE_OUTSIDE(11, Area.KHAZARD_BATTLEFIELD_COBBLE_OUTSIDE, GroundMaterial.VARROCK_PATHS, p -> p
 		.seasonalReplacement(SeasonalTheme.WINTER, WINTER_JAGGED_STONE_TILE_LIGHT_2)
@@ -516,6 +612,7 @@ public enum Overlay {
 	),
 	YANILLE_MAGIC_GUILD_FLOOR_FIX(10, Area.YANILLE_MAGIC_GUILD_FLOORS, GroundMaterial.TILES_2X2_1_SEMIGLOSS, p -> p.lightness(30)),
 	GUTANOTH_CAVE(29, Area.GUTANOTH_CAVE, WaterType.SWAMP_WATER_FLAT),
+	FELDIP_HILLS_HUNTER_OVERLAY(p -> p.ids(29).area(Area.FELDIP_HILLS_SOUTHERN_REGION).groundMaterial(GroundMaterial.GRASS_1)),
 
 	// Watchtower
 	YANILLE_WATCHTOWER_ARCHWAY_FIX_1(3, Area.YANILLE_WATCHTOWER_BOTTOM_DOORWAY, GroundMaterial.WORN_TILES),
@@ -552,20 +649,13 @@ public enum Overlay {
 		.hue(9)
 		.saturation(5)
 		.lightness(18)
+		.seasonalReplacement(SeasonalTheme.WINTER, WINTER_GRASS)
 	),
 	DRAYNOR_NEDS_PATH_FIX_ENABLE(p -> p
 		.ids(10)
 		.groundMaterial(GroundMaterial.GRAVEL)
 		.area(Area.DRAYNOR_NEDS_PATH_FIXES)
-		.replacementResolver(
-			(plugin, scene, tile, override) -> {
-				if (!plugin.configGroundBlending)
-					return override;
-				if (plugin.configSeasonalTheme == SeasonalTheme.WINTER)
-					return WINTER_GRASS;
-				return DRAYNOR_NEDS_PATH_FIX;
-			}
-		)
+		.replaceWithIf(DRAYNOR_NEDS_PATH_FIX, "blending")
 	),
 	DRAYNOR_BANK_FLOOR(10, Area.DRAYNOR_BANK, GroundMaterial.WORN_TILES, p -> p.blended(false)),
 	DRAYNOR_BANK_ENTRANCE_PATH(p -> p
@@ -579,15 +669,8 @@ public enum Overlay {
 		.ids(0)
 		.groundMaterial(GroundMaterial.OVERWORLD_GRASS_1)
 		.area(Area.DRAYNOR_BANK_FRONT_PATH)
-		.replacementResolver(
-			(plugin, scene, tile, override) -> {
-				if (plugin.configGroundBlending)
-					return DRAYNOR_BANK_ENTRANCE_PATH;
-				if (plugin.configSeasonalTheme == SeasonalTheme.WINTER)
-					return WINTER_GRASS;
-				return override;
-			}
-		)
+		.replaceWithIf(DRAYNOR_BANK_ENTRANCE_PATH, "blending")
+		.seasonalReplacement(SeasonalTheme.WINTER, WINTER_GRASS)
 	),
 	DRAYNOR_BANK_PATH_FIX_10_DARK(p -> p
 		.ids()
@@ -596,20 +679,13 @@ public enum Overlay {
 		.hue(9)
 		.saturation(4)
 		.lightness(8)
+		.seasonalReplacement(SeasonalTheme.WINTER, WINTER_GRASS)
 	),
 	DRAYNOR_BANK_PATH_FIX_DARK_ENABLE(p -> p
 		.ids(10)
 		.groundMaterial(GroundMaterial.GRAVEL)
 		.area(Area.DRAYNOR_BANK_PATH_FIX_DARK)
-		.replacementResolver(
-			(plugin, scene, tile, override) -> {
-				if (!plugin.configGroundBlending)
-					return override;
-				if (plugin.configSeasonalTheme == SeasonalTheme.WINTER)
-					return WINTER_GRASS;
-				return DRAYNOR_BANK_PATH_FIX_10_DARK;
-			}
-		)
+		.replaceWithIf(DRAYNOR_BANK_PATH_FIX_10_DARK, "blending")
 	),
 	DRAYNOR_BANK_PATH_FIX_10_LIGHT(p -> p
 		.ids()
@@ -617,21 +693,13 @@ public enum Overlay {
 		.hue(9)
 		.saturation(5)
 		.lightness(18)
-
+		.seasonalReplacement(SeasonalTheme.WINTER, WINTER_GRASS)
 	),
 	DRAYNOR_BANK_PATH_FIX_LIGHT_ENABLE(p -> p
 		.ids(10)
 		.groundMaterial(GroundMaterial.GRAVEL)
 		.area(Area.DRAYNOR_BANK_PATH_FIX_LIGHT)
-		.replacementResolver(
-			(plugin, scene, tile, override) -> {
-				if (!plugin.configGroundBlending)
-					return override;
-				if (plugin.configSeasonalTheme == SeasonalTheme.WINTER)
-					return WINTER_GRASS;
-				return DRAYNOR_BANK_PATH_FIX_10_LIGHT;
-			}
-		)
+		.replaceWithIf(DRAYNOR_BANK_PATH_FIX_10_LIGHT, "blending")
 	),
 	DRAYNOR_BANK_PATH_FIX_0(p -> p
 		.ids(0)
@@ -643,7 +711,9 @@ public enum Overlay {
 		.blended(false)
 		.lightness(74)
 		.shiftHue(-3)
-		.shiftSaturation(-7)),
+		.shiftSaturation(-7)
+		.replaceWithIf(null, "!textures")
+	),
 	// Draynor
 	DRAYNOR_SEWERS(p -> p.area(Area.DRAYNOR_SEWERS).ids(89).waterType(WaterType.MUDDY_WATER)),
 
@@ -661,11 +731,28 @@ public enum Overlay {
 
 
 	// Wizards Tower
-	WIZARDS_TOWER_PATH_FIX1(164, Area.WIZARDS_TOWER_PATH, GroundMaterial.FALADOR_PATHS, p -> p.shiftSaturation(-1)),
-	WIZARDS_TOWER_PATH_FIX2(164, Area.WIZARD_TOWER_PATH_PARTIAL_TILES, GroundMaterial.OVERWORLD_GRASS_1, p -> p
+	WIZARDS_TOWER_PATH(p -> p.ids(164).area(Area.WIZARDS_TOWER_PATH).groundMaterial(GroundMaterial.FALADOR_PATHS).shiftSaturation(-1)),
+	WIZARDS_TOWER_PATH_BLEND_FIX(p -> p
+		.ids()
+		.groundMaterial(GroundMaterial.OVERWORLD_GRASS_1)
 		.hue(10)
 		.saturation(5)
 		.lightness(19)
+	),
+	WIZARDS_TOWER_PATH_BLEND_FIX_WINTER(p -> p
+		.ids()
+		.area(Area.WIZARD_TOWER_PATH_PARTIAL_TILES)
+		.groundMaterial(GroundMaterial.FALADOR_PATHS)
+		.shiftSaturation(-1)
+		.replaceWithIf(WINTER_GRASS, "blending")
+	),
+	WIZARDS_TOWER_PATH_BLEND_FIX_TOGGLE(p -> p
+		.ids(164)
+		.area(Area.WIZARD_TOWER_PATH_PARTIAL_TILES)
+		.groundMaterial(GroundMaterial.FALADOR_PATHS)
+		.shiftSaturation(-1)
+		.seasonalReplacement(SeasonalTheme.WINTER, WIZARDS_TOWER_PATH_BLEND_FIX_WINTER)
+		.replaceWithIf(WIZARDS_TOWER_PATH_BLEND_FIX, "blending")
 	),
 
 	// Misthalin Mystery
@@ -696,14 +783,21 @@ public enum Overlay {
 
 	// Zanaris
 	COSMIC_ENTITYS_PLANE_ABYSS(37, Area.COSMIC_ENTITYS_PLANE, GroundMaterial.NONE, p -> p.lightness(0).blended(false)),
+	ZANARIS_POND_WATER(p -> p.ids(151).area(Area.ZANARIS).waterType(WaterType.WATER)),
 
 	// Morytania
 	CANIFIS_FLOORS(85, Area.CANIFIS, GroundMaterial.HD_WOOD_PLANKS_1),
 
 	MORYTANIA_SLAYER_TOWER(102, Area.MORYTANIA_SLAYER_TOWER, GroundMaterial.VARROCK_PATHS),
 	MORYTANIA_FENKENSTRAINS_CASTLE(102, Area.FENKENSTRAINS_CASTLE, GroundMaterial.VARROCK_PATHS),
+	SLEPE_PATHS(p -> p.ids(11).area(Area.SLEPE).groundMaterial(GroundMaterial.GRAVEL)),
 	ABANDONED_MINE_ROCK(11, Area.MORYTANIA, GroundMaterial.DIRT),
 	TRUE_BLOOD_ALTAR_BLOOD(72, Area.TRUE_BLOOD_ALTAR, WaterType.BLOOD),
+	BARROWS_PATH(GroundMaterial.DIRT, p -> p
+		.ids(110)
+		.area(Area.BARROWS)
+		.seasonalReplacement(SeasonalTheme.WINTER, WINTER_DIRT)),
+	TEMPLE_TREKKING_SWAMP_WATER(p -> p.ids(85).area(Area.TEMPLE_TREKKING_INSTANCES).waterType(WaterType.SWAMP_WATER)),
 
 	// Wilderness
 	WILDERNESS_NORTH_OF_RESOURCE_AREA_HILLS(11, Area.WILDERNESS_NORTH_OF_RESOURCE_AREA, GroundMaterial.VARIED_DIRT),
@@ -717,12 +811,14 @@ public enum Overlay {
 		.shiftLightness(12)
 		.shiftSaturation(-2)
 	),
+	LLETYA_WOOD_FLOORS(p -> p.ids(22).area(Area.LLETYA_UPPER_LEVELS).groundMaterial(GroundMaterial.HD_WOOD_PLANKS_1)),
 	TIRANNWN_PATHS(p -> p.area(Area.TIRANNWN).ids(106).groundMaterial(GroundMaterial.GRASSY_DIRT)),
 	PRIFDDINAS_POND_WATER(p -> p.area(Area.PRIFDDINAS).ids(151).waterType(WaterType.WATER)),
 	POISON_WASTE(85, Area.POISON_WASTE, WaterType.POISON_WASTE),
 	POISON_WASTE_DUNGEON_TAR(p -> p.ids(304).area(Area.POISON_WASTE_DUNGEON).waterType(WaterType.BLACK_TAR_FLAT)),
 
 	// Fossil Island
+	FOSSIL_ISLAND_WYVERN_DIRT(p -> p.ids(63).area(Area.FOSSIL_ISLAND_WYVERN_TASK_CAVE).groundMaterial(GroundMaterial.EARTHEN_CAVE_FLOOR)),
 	ANCIENT_MUSHROOM_POOL(95, Area.FOSSIL_ISLAND, WaterType.SWAMP_WATER_FLAT),
 	FOSSIL_ISLAND_CENTRAL_BANK_FIX(11, Area.FOSSIL_ISLAND_CENTRAL_BANK_FIX, GroundMaterial.GRAVEL, p -> p
 		.shiftLightness(-2)
@@ -732,11 +828,15 @@ public enum Overlay {
 		.seasonalReplacement(SeasonalTheme.WINTER, WINTER_JAGGED_STONE_TILE_LIGHT_2)
 	),
 	FOSSIL_ISLAND_HILL_TEXTURE_FIX(11, Area.FOSSIL_ISLAND_HILL_TEXTURE_FIX, GroundMaterial.VARIED_DIRT),
+	FOSSIL_ISLAND_VOLCANO_PATH(p -> p.ids(94).area(Area.FOSSIL_ISLAND).groundMaterial(GroundMaterial.GRAVEL)),
+	FOSSIL_ISLAND_SWAMP_WATER(p -> p.ids(59).area(Area.FOSSIL_ISLAND).waterType(WaterType.SWAMP_WATER)),
 
 	// Ape Atoll
 	APE_ATOLL_WATERFALLS(p -> p.area(Area.APE_ATOLL_WATERFALLS).waterType(WaterType.WATER).blended(false)),
 
 	// Zeah
+	LOVAKENGJ_GROUND(p -> p.ids(11).area(Area.LOVAKENGJ).groundMaterial(GroundMaterial.ROCKY_CAVE_FLOOR)),
+	LOVAKENGJ_PATH(p -> p.ids(132).area(Area.LOVAKENGJ).groundMaterial(GroundMaterial.PACKED_EARTH)),
 	// Great Kourend
 	KOUREND_CASTLE_BLEND_FIX(11, Area.KOUREND_CASTLE_ENTRANCE_FIX, GroundMaterial.VARROCK_PATHS, p -> p.blended(false)),
 	KOUREND_CASTLE_FLOOR(11, Area.KOUREND_CASTLE, GroundMaterial.VARROCK_PATHS),
@@ -748,6 +848,10 @@ public enum Overlay {
 	KOUREND_GREAT_STATUE_BLEND_FIX_2(11, Area.GREAT_KOUREND_STATUE, GroundMaterial.GRASS_1, p -> p.blended(false)),
 	HOSIDIUS_WELL_BLEND_FIX(-119, Area.HOSIDIUS_WELL, GroundMaterial.FALADOR_PATHS, p -> p.blended(false)),
 	HOSIDIUS_STAIRS_BLEND_FIX(-119, Area.HOSIDIUS_STAIRS, GroundMaterial.FALADOR_PATHS, p -> p.blended(false)),
+	HOSIDIUS_MAGIC_TREE_BLEND_FIX(159, Area.HOSIDIUS, GroundMaterial.DIRT, p -> p
+		.blended(false)
+		.seasonalReplacement(SeasonalTheme.WINTER, WINTER_DIRT)
+	),
 	SHAYZIEN_EAST_PATH_FIX(11, Area.SHAYZIEN_EAST_ENTRANCE_BLEND_FIX, GroundMaterial.VARROCK_PATHS, p -> p.blended(false)),
 	XERICS_LOOKOUT_TILE(Area.XERICS_LOOKOUT, GroundMaterial.TILES_2x2_2, p -> p.blended(false).ids(50, 2)),
 
@@ -807,7 +911,7 @@ public enum Overlay {
 		.ids(203)
 		.area(Area.TEMPLE_OF_THE_EYE_BLEND_FIX)
 		.groundMaterial(GroundMaterial.SAND)
-		.replaceWithIf(TEMPLE_OF_THE_EYE_PATH_BLENDING_FIX, plugin -> plugin.configGroundBlending)
+		.replaceWithIf(TEMPLE_OF_THE_EYE_PATH_BLENDING_FIX, "blending")
 	),
 	TEMPLE_OF_THE_EYE_CENTER_PLATFORM_181(p -> p
 		.ids(181)
@@ -830,6 +934,7 @@ public enum Overlay {
 		.area(Area.TEMPLE_OF_THE_EYE)
 		.groundMaterial(GroundMaterial.ROCKY_CAVE_FLOOR)
 	),
+	TEMPLE_OF_LIGHT_FLOOR(p -> p.ids(106).area(Area.TEMPLE_OF_LIGHT).groundMaterial(GroundMaterial.WORN_TILES).blended(false).shiftLightness(15)),
 
 	// God Wars Dungeon (GWD)
 	GWD_WATER(104, Area.GOD_WARS_DUNGEON, WaterType.ICE_FLAT),
@@ -849,15 +954,13 @@ public enum Overlay {
 
 	CRANDOR_GROUND_1(11, Area.CRANDOR, GroundMaterial.GRAVEL),
 
-	FISHING_TRAWLER_BOAT_PORT_KHAZARD_FIX(42, Area.FISHING_TRAWLER_BOAT_PORT_KHAZARD, WaterType.WATER),
+	FISHING_TRAWLER_BOAT_PORT_KHAZARD_FIX(42, Area.FISHING_TRAWLER_BOAT_PORT_KHAZARD, GroundMaterial.TRANSPARENT),
 	FISHING_TRAWLER_BOAT_FLOODED(6, Area.FISHING_TRAWLER_BOAT_FLOODED, WaterType.WATER_FLAT),
 
-	// Mind Altar
+	// Runecrafting Altars
 	MIND_ALTAR_TILE_1(3, Area.MIND_ALTAR, GroundMaterial.MARBLE_1_SEMIGLOSS, p -> p.blended(false)),
 	MIND_ALTAR_TILE_4(Area.MIND_ALTAR, GroundMaterial.MARBLE_2_SEMIGLOSS, p -> p.blended(false).ids(4, 10)),
-
-	// Law Altar
-	LAW_ALTAR_SYMBOL(87, Area.LAW_ALTAR, GroundMaterial.DIRT, p -> p.blended(false)),
+	LAW_ALTAR_SYMBOL(87, Area.LAW_ALTAR, GroundMaterial.MARBLE_2_GLOSS, p -> p.blended(false)),
 
 	// Dragon Slayer II
 	DS2_SHIPS_WATER(6, Area.DS2_SHIPS, WaterType.WATER_FLAT),
@@ -919,6 +1022,7 @@ public enum Overlay {
 	// Random events
 	PRISON_PETE_TILE_1(2, Area.RANDOM_EVENT_PRISON_PETE, GroundMaterial.MARBLE_1, p -> p.blended(false)),
 	PRISON_PETE_TILE_2(-125, Area.RANDOM_EVENT_PRISON_PETE, GroundMaterial.MARBLE_2, p -> p.blended(false)),
+	CLASSROOM(p -> p.ids(102).area(Area.RANDOM_EVENT_CLASSROOM).groundMaterial(GroundMaterial.HD_WOOD_PLANKS_1)),
 
 	// Elid Cave fix
 	ELID_CAVE_WATER_FIX(-126, Area.ELID_CAVE, WaterType.WATER),
@@ -944,30 +1048,37 @@ public enum Overlay {
 	CERBERUS_WATER(128, Area.CERBERUS, WaterType.SWAMP_WATER_FLAT),
 	SHIP_SAILING_WATER(p -> p.area(Area.SHIP_SAILING).ids(6).waterType(WaterType.WATER_FLAT)),
 
-	// Default overlays
-	OVERLAY_WATER(p -> p.area(Area.OVERWORLD).ids(-128, -105, -98, 6, 41, 104, 196).waterType(WaterType.WATER)),
-	OVERWORLD_GRASS(p -> p
-		.area(Area.OVERWORLD)
-		.ids(29)
-		.groundMaterial(GroundMaterial.OVERWORLD_GRASS_1)
-		.seasonalReplacement(SeasonalTheme.WINTER, WINTER_GRASS)
-	),
-	OVERLAY_DIRT(
-		GroundMaterial.DIRT,
-		p -> p.ids(-124, -84, -83, 14, 15, 16, 21, 22, 23, 60, 77, 81, 82, 88, 89, 101, 102, 107, 108, 110, 115, 123, 227)
-	),
-	OVERLAY_GRAVEL(GroundMaterial.GRAVEL, p -> p.ids(-76, 2, 3, 4, 6, 8, 9, 10, 119, 127)),
-	OVERLAY_VARROCK_PATHS(Area.OVERWORLD, GroundMaterial.VARROCK_PATHS, p -> p
-		.seasonalReplacement(SeasonalTheme.WINTER, WINTER_JAGGED_STONE_TILE)
-		.ids(-85, -77, 11)
-	),
 	WIZARD_TOWER_ROOF(GroundMaterial.MARBLE_1_GLOSS, p -> p
 		.ids(33)
 		.blended(false)
 		.area(Area.WIZARD_TOWER_ROOF)
 		.seasonalReplacement(SeasonalTheme.WINTER, SNOW_2)
 	),
-	OVERLAY_SWAMP_WATER(WaterType.SWAMP_WATER, p -> p.ids(-100, 7)),
+	VARROCK_PATHS(Area.OVERWORLD, GroundMaterial.VARROCK_PATHS, p -> p
+		.seasonalReplacement(SeasonalTheme.WINTER, WINTER_JAGGED_STONE_TILE)
+		.ids(-85, -77, 11)
+	),
+	SOUL_WARS_DIRT_PATH(p -> p.ids(106).area(Area.ISLE_OF_SOULS).groundMaterial(GroundMaterial.DIRT)),
+
+	// Default overworld overlays
+	OVERWORLD_GRASS(p -> p
+		.area(Area.OVERWORLD)
+		.ids(29)
+		.groundMaterial(GroundMaterial.OVERWORLD_GRASS_1)
+		.seasonalReplacement(SeasonalTheme.WINTER, WINTER_GRASS)
+	),
+
+	// Black tiles
+	VANILLA_BLACK_TILE(37, GroundMaterial.NONE, p -> p.lightness(0).blended(false)),
+
+	// Fallback overlays
+	OVERLAY_WATER(p -> p.ids(-105, -98, 6, 41, 104, 196).waterType(WaterType.WATER)),
+	OVERLAY_DIRT(
+		GroundMaterial.DIRT,
+		p -> p.ids(-124, -84, -83, 14, 15, 16, 21, 22, 23, 60, 77, 81, 82, 88, 89, 101, 102, 107, 108, 110, 115, 123, 227)
+	),
+	OVERLAY_GRAVEL(GroundMaterial.GRAVEL, p -> p.ids(-76, 2, 3, 4, 8, 9, 10, 119, 127)),
+	OVERLAY_SWAMP_WATER(WaterType.SWAMP_WATER, p -> p.ids(-100, 7, 128)),
 	OVERLAY_WOOD_PLANKS(GroundMaterial.WOOD_PLANKS_1, p -> p.ids(5, 35)),
 	OVERLAY_CLEAN_WOOD_PLANKS(GroundMaterial.CLEAN_WOOD_FLOOR, p -> p.ids(52).shiftLightness(-4)),
 	OVERLAY_SAND(GroundMaterial.SAND, p -> p.ids(25, 26, 76)),
@@ -1002,13 +1113,18 @@ public enum Overlay {
 	public final WaterType waterType;
 	public final boolean blended;
 	public final boolean blendedAsUnderlay;
-	public final int hue;
 	public final int shiftHue;
-	public final int saturation;
+	public final int minHue;
+	public final int maxHue;
 	public final int shiftSaturation;
-	public final int lightness;
+	public final int minSaturation;
+	public final int maxSaturation;
 	public final int shiftLightness;
-	public final TileOverrideResolver<Overlay> replacementResolver;
+	public final int minLightness;
+	public final int maxLightness;
+	public final int uvOrientation;
+	public final float uvScale;
+	public final List<TileOverride.IReplacement<Overlay>> replacements;
 
 	Overlay(int id, GroundMaterial material) {
 		this(p -> p.ids(id).groundMaterial(material));
@@ -1045,19 +1161,25 @@ public enum Overlay {
 	Overlay(Consumer<TileOverrideBuilder<Overlay>> consumer) {
 		TileOverrideBuilder<Overlay> builder = new TileOverrideBuilder<>();
 		consumer.accept(builder);
+		builder.normalize();
 		this.filterIds = builder.ids;
-		this.replacementResolver = builder.replacementResolver;
-		this.waterType = builder.waterType;
-		this.groundMaterial = builder.groundMaterial;
+		this.replacements = builder.replacements;
 		this.area = builder.area;
+		this.groundMaterial = builder.groundMaterial;
+		this.waterType = builder.waterType;
 		this.blended = builder.blended;
 		this.blendedAsUnderlay = builder.blendedAsOpposite;
-		this.hue = builder.hue;
 		this.shiftHue = builder.shiftHue;
-		this.saturation = builder.saturation;
+		this.minHue = builder.minHue;
+		this.maxHue = builder.maxHue;
 		this.shiftSaturation = builder.shiftSaturation;
-		this.lightness = builder.lightness;
+		this.minSaturation = builder.minSaturation;
+		this.maxSaturation = builder.maxSaturation;
 		this.shiftLightness = builder.shiftLightness;
+		this.minLightness = builder.minLightness;
+		this.maxLightness = builder.maxLightness;
+		this.uvOrientation = builder.uvOrientation;
+		this.uvScale = builder.uvScale;
 	}
 
 	private static final Overlay[] ANY_MATCH;
@@ -1083,8 +1205,13 @@ public enum Overlay {
 
 	@NonNull
 	public static Overlay getOverlay(Scene scene, Tile tile, HdPlugin plugin) {
+		return getOverlayBeforeReplacements(scene, tile).resolveReplacements(scene, tile, plugin);
+	}
+
+	@NonNull
+	public static Overlay getOverlayBeforeReplacements(Scene scene, Tile tile) {
 		LocalPoint localLocation = tile.getLocalLocation();
-		int[] worldPoint = HDUtils.localToWorld(scene, localLocation.getX(), localLocation.getY(), tile.getRenderLevel());
+		int[] worldPoint = localToWorld(scene, localLocation.getX(), localLocation.getY(), tile.getRenderLevel());
 
 		Overlay match = Overlay.NONE;
 		for (Overlay overlay : ANY_MATCH) {
@@ -1109,27 +1236,35 @@ public enum Overlay {
 			}
 		}
 
-		if (match.replacementResolver != null) {
-			match = match.replacementResolver.resolve(plugin, scene, tile, match);
-			if (match == null)
-				match = NONE;
-		}
-
 		return match;
 	}
 
+	public Overlay resolveReplacements(Scene scene, Tile tile, HdPlugin plugin) {
+		if (replacements != null) {
+			for (var resolver : replacements) {
+				var replacement = resolver.resolve(plugin, scene, tile, this);
+				if (replacement == null)
+					return NONE;
+				if (replacement != this)
+					return replacement;
+			}
+		}
+
+		return this;
+	}
+
 	public int modifyColor(int jagexHsl) {
-		int h = hue != -1 ? hue : jagexHsl >> 10 & 0x3F;
+		int h = jagexHsl >> 10 & 0x3F;
 		h += shiftHue;
-		h = HDUtils.clamp(h, 0, 0x3F);
+		h = clamp(h, minHue, maxHue);
 
-		int s = saturation != -1 ? saturation : jagexHsl >> 7 & 7;
+		int s = jagexHsl >> 7 & 7;
 		s += shiftSaturation;
-		s = HDUtils.clamp(s, 0, 7);
+		s = clamp(s, minSaturation, maxSaturation);
 
-		int l = lightness != -1 ? lightness : jagexHsl & 0x7F;
+		int l = jagexHsl & 0x7F;
 		l += shiftLightness;
-		l = HDUtils.clamp(l, 0, 0x7F);
+		l = clamp(l, minLightness, maxLightness);
 
 		return h << 10 | s << 7 | l;
 	}

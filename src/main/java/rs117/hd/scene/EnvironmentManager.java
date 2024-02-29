@@ -76,17 +76,15 @@ public class EnvironmentManager {
 	@Inject
 	private EnvironmentEditor environmentEditor;
 
-	// transition time
-	private static final int TRANSITION_DURATION = 3000;
+	private static final float TRANSITION_DURATION = 3; // seconds
+
 	// distance in tiles to skip transition (e.g. entering cave, teleporting)
 	// walking across a loading line causes a movement of 40-41 tiles
 	private static final int SKIP_TRANSITION_DISTANCE = 41;
 
-	// last environment change time
-	private long startTime = 0;
-	// time of last frame; used for lightning
-	long lastFrameTime = -1;
-
+	// when the current transition began, relative to plugin startup
+	private boolean transitionComplete = true;
+	private float transitionStartTime = 0;
 	private int[] previousPosition = new int[3];
 
 	private float[] startFogColor = new float[] { 0, 0, 0 };
@@ -181,6 +179,10 @@ public class EnvironmentManager {
 					env.normalize();
 
 				clientThread.invoke(() -> {
+					// Force instant transition during development
+					if (!first)
+						reset();
+
 					if (client.getGameState().getState() >= GameState.LOGGED_IN.getState() && plugin.getSceneContext() != null)
 						loadSceneEnvironments(plugin.getSceneContext());
 				});
@@ -204,9 +206,7 @@ public class EnvironmentManager {
 	}
 
 	public void triggerTransition() {
-		if (currentEnvironment != Environment.NONE)
-			forceNextTransition = true;
-		currentEnvironment = Environment.NONE;
+		forceNextTransition = true;
 	}
 
 	/**
@@ -233,47 +233,43 @@ public class EnvironmentManager {
 		previousPosition = focalPoint;
 
 		boolean skipTransition = tileChange >= SKIP_TRANSITION_DISTANCE;
-		for (var environment : sceneContext.environments)
-		{
-			if (environment.area.containsPoint(focalPoint))
-			{
-				if (environment != currentEnvironment)
-				{
-					changeEnvironment(environment, skipTransition);
-				}
+		for (var environment : sceneContext.environments) {
+			if (environment.area.containsPoint(focalPoint)) {
+				changeEnvironment(environment, skipTransition);
 				break;
 			}
 		}
 
 		updateTargetSkyColor(); // Update every frame, since other plugins may control it
 
-		// interpolate between start and target values
-		long currentTime = System.currentTimeMillis();
-		// If time somehow skips backwards, abort the transition
-		if (currentTime < startTime)
-			startTime = 0;
-		float t = clamp((currentTime - startTime) / (float) TRANSITION_DURATION, 0, 1);
-		currentFogColor = hermite(startFogColor, targetFogColor, t);
-		currentWaterColor = hermite(startWaterColor, targetWaterColor, t);
-		currentFogDepth = hermite(startFogDepth, targetFogDepth, t);
-		currentAmbientStrength = hermite(startAmbientStrength, targetAmbientStrength, t);
-		currentAmbientColor = hermite(startAmbientColor, targetAmbientColor, t);
-		currentDirectionalStrength = hermite(startDirectionalStrength, targetDirectionalStrength, t);
-		currentDirectionalColor = hermite(startDirectionalColor, targetDirectionalColor, t);
-		currentUnderglowStrength = hermite(startUnderglowStrength, targetUnderglowStrength, t);
-		currentUnderglowColor = hermite(startUnderglowColor, targetUnderglowColor, t);
-		currentGroundFogStart = hermite(startGroundFogStart, targetGroundFogStart, t);
-		currentGroundFogEnd = hermite(startGroundFogEnd, targetGroundFogEnd, t);
-		currentGroundFogOpacity = hermite(startGroundFogOpacity, targetGroundFogOpacity, t);
-		for (int i = 0; i < 2; i++)
-			currentSunAngles[i] = hermite(startSunAngles[i], targetSunAngles[i], t);
-		currentUnderwaterCausticsColor = hermite(startUnderwaterCausticsColor, targetUnderwaterCausticsColor, t);
-		currentUnderwaterCausticsStrength = hermite(startUnderwaterCausticsStrength, targetUnderwaterCausticsStrength, t);
+		if (transitionComplete) {
+			// Always write fog and water color, since they're affected by lightning
+			currentFogColor = targetFogColor;
+			currentWaterColor = targetWaterColor;
+		} else {
+			// interpolate between start and target values
+			float t = clamp((plugin.elapsedTime - transitionStartTime) / TRANSITION_DURATION, 0, 1);
+			if (t >= 1)
+				transitionComplete = true;
+			currentFogColor = hermite(startFogColor, targetFogColor, t);
+			currentWaterColor = hermite(startWaterColor, targetWaterColor, t);
+			currentFogDepth = hermite(startFogDepth, targetFogDepth, t);
+			currentAmbientStrength = hermite(startAmbientStrength, targetAmbientStrength, t);
+			currentAmbientColor = hermite(startAmbientColor, targetAmbientColor, t);
+			currentDirectionalStrength = hermite(startDirectionalStrength, targetDirectionalStrength, t);
+			currentDirectionalColor = hermite(startDirectionalColor, targetDirectionalColor, t);
+			currentUnderglowStrength = hermite(startUnderglowStrength, targetUnderglowStrength, t);
+			currentUnderglowColor = hermite(startUnderglowColor, targetUnderglowColor, t);
+			currentGroundFogStart = hermite(startGroundFogStart, targetGroundFogStart, t);
+			currentGroundFogEnd = hermite(startGroundFogEnd, targetGroundFogEnd, t);
+			currentGroundFogOpacity = hermite(startGroundFogOpacity, targetGroundFogOpacity, t);
+			for (int i = 0; i < 2; i++)
+				currentSunAngles[i] = hermite(startSunAngles[i], targetSunAngles[i], t);
+			currentUnderwaterCausticsColor = hermite(startUnderwaterCausticsColor, targetUnderwaterCausticsColor, t);
+			currentUnderwaterCausticsStrength = hermite(startUnderwaterCausticsStrength, targetUnderwaterCausticsStrength, t);
+		}
 
 		updateLightning();
-
-		// update some things for use next frame
-		lastFrameTime = currentTime;
 	}
 
 	public void forceEnvironment(Environment newEnvironment, boolean skipTransition) {
@@ -367,24 +363,25 @@ public class EnvironmentManager {
 	 * @param newEnvironment the new environment to transition to
 	 * @param skipTransition whether the transition should be done instantly
 	 */
-	public void changeEnvironment(Environment newEnvironment, boolean skipTransition) {
-		if (forcedEnvironment) {
-			return;
-		}
-		if (currentEnvironment == newEnvironment)
+	private void changeEnvironment(Environment newEnvironment, boolean skipTransition) {
+		// Skip changing the environment unless the transition is forced, since reapplying
+		// the overworld environment is required when switching between seasonal themes
+		if (currentEnvironment == newEnvironment && !forceNextTransition)
 			return;
 
-		startTime = System.currentTimeMillis();
-		if (forceNextTransition) {
+		if (currentEnvironment == Environment.NONE) {
+			skipTransition = true;
+		} else if (forceNextTransition) {
 			forceNextTransition = false;
-		} else if (skipTransition || currentEnvironment == Environment.NONE) {
-			startTime -= TRANSITION_DURATION;
+			skipTransition = false;
 		}
 
 		log.debug("changing environment from {} to {} (instant: {})", currentEnvironment, newEnvironment, skipTransition);
 		currentEnvironment = newEnvironment;
+		transitionComplete = false;
+		transitionStartTime = plugin.elapsedTime - (skipTransition ? TRANSITION_DURATION : 0);
 
-		// set previous variables to current ones
+		// Start transitioning from the current values
 		startFogColor = currentFogColor;
 		startWaterColor = currentWaterColor;
 		startFogDepth = currentFogDepth;
@@ -471,8 +468,6 @@ public class EnvironmentManager {
 		sceneContext.environments.clear();
 		outer:
 		for (var environment : environments) {
-			if (environment.area == null)
-				continue;
 			for (AABB region : regions) {
 				for (AABB aabb : environment.area.getAabbs()) {
 					if (region.intersects(aabb)) {
@@ -483,17 +478,20 @@ public class EnvironmentManager {
 				}
 			}
 		}
+
+		// Fall back to the default environment
+		sceneContext.environments.add(Environment.DEFAULT);
 	}
 
 	/* lightning */
 	private static final float[] LIGHTNING_COLOR = new float[]{.25f, .25f, .25f};
 	private static final float NEW_LIGHTNING_BRIGHTNESS = 7f;
 	private static final float LIGHTNING_FADE_SPEED = 80f; // brightness units per second
-	private static final int MIN_LIGHTNING_INTERVAL = 5500;
-	private static final int MAX_LIGHTNING_INTERVAL = 17000;
+	private static final float MIN_LIGHTNING_INTERVAL = 5.5f;
+	private static final float MAX_LIGHTNING_INTERVAL = 17f;
 	private static final float QUICK_LIGHTNING_CHANCE = .5f;
-	private static final int MIN_QUICK_LIGHTNING_INTERVAL = 40;
-	private static final int MAX_QUICK_LIGHTNING_INTERVAL = 150;
+	private static final float MIN_QUICK_LIGHTNING_INTERVAL = .04f;
+	private static final float MAX_QUICK_LIGHTNING_INTERVAL = .15f;
 
 	@Getter
 	private float lightningBrightness = 0f;
@@ -505,8 +503,7 @@ public class EnvironmentManager {
 	 */
 	void updateLightning() {
 		if (lightningBrightness > 0) {
-			int frameTime = (int) (System.currentTimeMillis() - lastFrameTime);
-			float brightnessChange = (frameTime / 1000f) * LIGHTNING_FADE_SPEED;
+			float brightnessChange = plugin.deltaTime * LIGHTNING_FADE_SPEED;
 			lightningBrightness = Math.max(lightningBrightness - brightnessChange, 0);
 		}
 
@@ -514,7 +511,7 @@ public class EnvironmentManager {
 			generateNextLightningTime();
 			return;
 		}
-		if (System.currentTimeMillis() > nextLightningTime) {
+		if (plugin.elapsedTime > nextLightningTime) {
 			lightningBrightness = NEW_LIGHTNING_BRIGHTNESS;
 			generateNextLightningTime();
 		}
@@ -534,7 +531,7 @@ public class EnvironmentManager {
 	 * or a longer interval at the end of a cluster.
 	 */
 	void generateNextLightningTime() {
-		nextLightningTime = System.currentTimeMillis();
+		nextLightningTime = plugin.elapsedTime;
 		if (Math.random() <= QUICK_LIGHTNING_CHANCE) {
 			// chain together lighting strikes in quick succession
 			nextLightningTime += lerp(MIN_QUICK_LIGHTNING_INTERVAL, MAX_QUICK_LIGHTNING_INTERVAL, rand.nextFloat());

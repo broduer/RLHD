@@ -1367,10 +1367,29 @@
     "waterColor": "#2b2b40"
   },
   {
+    "area": "ABYSS",
+    "fogColor": "#100707",
+    "fogDepth": 65,
+    "ambientColor": "#AAAFB6",
+    "ambientStrength": 2.2,
+    "directionalColor": "#FFFFFF",
+    "directionalStrength": 1,
+    "sunAngles": [ 80, 190 ]
+  },
+  {
+    "area": "DEFENDER_OF_VARROCK_CASTLE_UNDER_ATTACK",
+    "ambientColor": "#97baff",
+    "ambientStrength": 1.5,
+    "directionalStrength": 2,
+    "fogColor": "#00000B",
+    "fogDepth": 45
+  },
+  {
     "key": "OVERWORLD",
     "area": "OVERWORLD",
     "ambientColor": "#97baff",
     "directionalStrength": 4,
+    "sunAngles": [ 52, 235 ],
     "fogDepth": 6.5
   },
   {
@@ -1399,6 +1418,7 @@
     "ambientColor": "#8fcaff",
     "ambientStrength": 3.5,
     "directionalStrength": 1.5,
+    "sunAngles": [ 52, 235 ],
     "fogColor": "#b8c5db",
     "fogDepth": 35
   }
