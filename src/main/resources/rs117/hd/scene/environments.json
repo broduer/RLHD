@@ -1370,7 +1370,7 @@
     "area": "ABYSS",
     "fogColor": "#100707",
     "fogDepth": 65,
-    "ambientColor": "#AAAFB6",
+    "ambientColor": "#aaafb6",
     "ambientStrength": 2.2,
     "directionalStrength": 1,
     "sunAngles": [
@@ -1391,7 +1391,6 @@
     "area": "OVERWORLD",
     "ambientColor": "#97baff",
     "directionalStrength": 4,
-    "sunAngles": [ 52, 235 ],
     "fogDepth": 6.5
   },
   {
