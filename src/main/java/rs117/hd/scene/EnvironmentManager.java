@@ -363,8 +363,9 @@ public class EnvironmentManager {
 
 		var overworldEnv = getOverworldEnvironment();
 		float[] sunAngles = env.sunAngles;
-		if (sunAngles == null)
-			sunAngles = overworldEnv.sunAngles;
+		if (sunAngles == null) {
+			sunAngles = HDUtils.sunAngles(52, 235);
+		}
 		System.arraycopy(sunAngles, 0, targetSunAngles, 0, 2);
 
 		if (!config.atmosphericLighting())

@@ -1368,15 +1368,15 @@
   },
   {
     "area": "ABYSS",
-    "fogColor": "#100707",
-    "fogDepth": 65,
     "ambientColor": "#aaafb6",
     "ambientStrength": 2.2,
     "directionalStrength": 1,
     "sunAngles": [
       80,
       90
-    ]
+    ],
+	"fogColor": "#100707",
+    "fogDepth": 65
   },
   {
     "area": "DEFENDER_OF_VARROCK_CASTLE_UNDER_ATTACK",
