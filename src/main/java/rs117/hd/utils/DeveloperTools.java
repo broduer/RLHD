@@ -12,6 +12,7 @@ import net.runelite.client.input.KeyListener;
 import net.runelite.client.input.KeyManager;
 import rs117.hd.data.environments.Area;
 import rs117.hd.overlays.FrameTimingsOverlay;
+import rs117.hd.overlays.LightGizmoOverlay;
 import rs117.hd.overlays.ShadowMapOverlay;
 import rs117.hd.overlays.TileInfoOverlay;
 import rs117.hd.tooling.enviroment.EnvironmentEditor;
@@ -22,6 +23,7 @@ public class DeveloperTools implements KeyListener {
 	private static final Keybind KEY_TOGGLE_TILE_INFO = new Keybind(KeyEvent.VK_F3, InputEvent.CTRL_DOWN_MASK);
 	private static final Keybind KEY_TOGGLE_FRAME_TIMINGS = new Keybind(KeyEvent.VK_F4, InputEvent.CTRL_DOWN_MASK);
 	private static final Keybind KEY_TOGGLE_SHADOW_MAP_OVERLAY = new Keybind(KeyEvent.VK_F5, InputEvent.CTRL_DOWN_MASK);
+	private static final Keybind KEY_TOGGLE_LIGHT_GIZMO_OVERLAY = new Keybind(KeyEvent.VK_F6, InputEvent.CTRL_DOWN_MASK);
 
 	private static final Keybind KEY_TOGGLE_EDITOR = new Keybind(KeyEvent.VK_F6, InputEvent.CTRL_DOWN_MASK);
 
@@ -42,10 +44,14 @@ public class DeveloperTools implements KeyListener {
 
 	@Inject
 	private EnvironmentEditor environmentEditor;
+	
+	private LightGizmoOverlay lightGizmoOverlay;
+
 
 	private boolean tileInfoOverlayEnabled = false;
 	private boolean frameTimingsOverlayEnabled = false;
 	private boolean shadowMapOverlayEnabled = false;
+	private boolean lightGizmoOverlayEnabled = false;
 
 	public void activate() {
 		eventBus.register(this);
@@ -59,6 +65,7 @@ public class DeveloperTools implements KeyListener {
 		tileInfoOverlay.setActive(tileInfoOverlayEnabled);
 		frameTimingsOverlay.setActive(frameTimingsOverlayEnabled);
 		shadowMapOverlay.setActive(shadowMapOverlayEnabled);
+		lightGizmoOverlay.setActive(lightGizmoOverlayEnabled);
 
 		// Check for any out of bounds areas
 		for (Area area : Area.values()) {
@@ -80,6 +87,7 @@ public class DeveloperTools implements KeyListener {
 		tileInfoOverlay.setActive(false);
 		frameTimingsOverlay.setActive(false);
 		shadowMapOverlay.setActive(false);
+		lightGizmoOverlay.setActive(false);
 	}
 
 	@Subscribe
@@ -104,6 +112,8 @@ public class DeveloperTools implements KeyListener {
 				break;
 			case "editor":
 				openEditor();
+			case "lights":
+				lightGizmoOverlay.setActive(lightGizmoOverlayEnabled = !lightGizmoOverlayEnabled);
 				break;
 		}
 	}
@@ -127,12 +137,12 @@ public class DeveloperTools implements KeyListener {
 
 		if (KEY_TOGGLE_EDITOR.matches(event)) {
 			event.consume();
-			openEditor();
+			environmentEditor.open();
 		}
-	}
-
-	public void openEditor() {
-		environmentEditor.open();
+		if (KEY_TOGGLE_LIGHT_GIZMO_OVERLAY.matches(event)) {
+			event.consume();
+			lightGizmoOverlay.setActive(lightGizmoOverlayEnabled = !lightGizmoOverlayEnabled);
+		}
 	}
 
 	@Override
