@@ -44,7 +44,8 @@ public class DeveloperTools implements KeyListener {
 
 	@Inject
 	private EnvironmentEditor environmentEditor;
-	
+
+	@Inject
 	private LightGizmoOverlay lightGizmoOverlay;
 
 
@@ -111,7 +112,8 @@ public class DeveloperTools implements KeyListener {
 				shadowMapOverlay.setActive(shadowMapOverlayEnabled = !shadowMapOverlayEnabled);
 				break;
 			case "editor":
-				openEditor();
+				environmentEditor.open();
+				break;
 			case "lights":
 				lightGizmoOverlay.setActive(lightGizmoOverlayEnabled = !lightGizmoOverlayEnabled);
 				break;
