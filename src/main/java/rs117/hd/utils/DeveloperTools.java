@@ -25,7 +25,7 @@ public class DeveloperTools implements KeyListener {
 	private static final Keybind KEY_TOGGLE_SHADOW_MAP_OVERLAY = new Keybind(KeyEvent.VK_F5, InputEvent.CTRL_DOWN_MASK);
 	private static final Keybind KEY_TOGGLE_LIGHT_GIZMO_OVERLAY = new Keybind(KeyEvent.VK_F6, InputEvent.CTRL_DOWN_MASK);
 
-	private static final Keybind KEY_TOGGLE_EDITOR = new Keybind(KeyEvent.VK_F6, InputEvent.CTRL_DOWN_MASK);
+	private static final Keybind KEY_TOGGLE_EDITOR = new Keybind(KeyEvent.VK_F7, InputEvent.CTRL_DOWN_MASK);
 
 	@Inject
 	private EventBus eventBus;
