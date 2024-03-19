@@ -42,7 +42,6 @@
     "area": "WILDERNESS_HIGH",
     "lightningEffects": true,
     "ambientColor": "#d7d2d2",
-    "ambientStrength": 1,
     "directionalColor": "#c5b8b6",
     "directionalStrength": 1.75,
     "fogColor": "#101012",
@@ -431,9 +430,9 @@
   },
   {
     "area": "LUMBRIDGE_CASTLE_BASEMENT",
+    "ambientStrength": 1.5,
     "directionalColor": "#a29b71",
     "directionalStrength": 1.5,
-    "ambientStrength": 1.5,
     "sunAngles": [
       80,
       190
@@ -792,9 +791,9 @@
   {
     "area": "SHADOW_DUNGEON",
     "ambientColor": "#ababab",
+    "ambientStrength": 2,
     "directionalColor": "#565656",
     "directionalStrength": 1,
-    "ambientStrength": 2,
     "fogDepth": 40
   },
   {
@@ -1373,7 +1372,7 @@
       80,
       90
     ],
-	"fogColor": "#100707",
+    "fogColor": "#100707",
     "fogDepth": 65
   },
   {
@@ -1386,9 +1385,8 @@
   },
   {
     "area": "MIND_ALTAR",
-    "fogColor": "#000000",
+    "ambientColor": "#aaafb6",
     "ambientStrength": 0.3,
-    "ambientColor": "#AAAFB6",
     "directionalStrength": 1.6,
     "sunAngles": [
       76,
@@ -1398,9 +1396,8 @@
   },
   {
     "area": "EARTH_ALTAR",
-    "fogColor": "#000000",
+    "ambientColor": "#aaafb6",
     "ambientStrength": 0.3,
-    "ambientColor": "#AAAFB6",
     "directionalStrength": 1.6,
     "sunAngles": [
       76,
@@ -1410,26 +1407,26 @@
   },
   {
     "area": "FIRE_ALTAR",
-    "fogColor": "#100707",
+    "ambientColor": "#aaafb6",
     "ambientStrength": 0.3,
-    "ambientColor": "#AAAFB6",
     "directionalStrength": 1.8,
     "sunAngles": [
       66,
       195
     ],
+    "fogColor": "#100707",
     "fogDepth": 35
   },
   {
     "area": "BODY_ALTAR",
-    "fogColor": "#100707",
+    "ambientColor": "#aaafb6",
     "ambientStrength": 0.3,
-    "ambientColor": "#AAAFB6",
     "directionalStrength": 1.7,
     "sunAngles": [
       66,
       250
     ],
+    "fogColor": "#100707",
     "fogDepth": 46
   },
   {
@@ -1495,7 +1492,6 @@
     "ambientColor": "#8fcaff",
     "ambientStrength": 3.5,
     "directionalStrength": 1.5,
-    "sunAngles": [ 52, 235 ],
     "fogColor": "#b8c5db",
     "fogDepth": 35
   }

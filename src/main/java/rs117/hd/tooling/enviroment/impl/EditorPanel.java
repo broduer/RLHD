@@ -165,7 +165,6 @@ public class EditorPanel extends JPanel {
 			JPanel panel = new JPanel(new BorderLayout());
 			panel.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, Color.decode("#1B1B1B")));
 
-
 			JPanel cardLayoutPanel = new JPanel(new CardLayout());
 			panel.add(cardLayoutPanel, BorderLayout.CENTER);
 
@@ -212,6 +211,7 @@ public class EditorPanel extends JPanel {
 		DefaultMutableTreeNode root = new DefaultMutableTreeNode("Environments");
 		addEnvironmentNodes(root, "Mainland", false);
 		addEnvironmentNodes(root, "Underground", true);
+		addEnvironmentNodesThemes(root,"Themes");
 		return root;
 	}
 
@@ -225,7 +225,18 @@ public class EditorPanel extends JPanel {
 			.filter(env -> env.area != null && (underground != Area.OVERWORLD.intersects(env.area)))
 			.collect(Collectors.toList());
 
+
 		environments.forEach(env -> node.add(new DefaultMutableTreeNode(new NodeData(env))));
+		rearrangeNodes(node);
+	}
+
+	private void addEnvironmentNodesThemes(DefaultMutableTreeNode parent, String label) {
+		DefaultMutableTreeNode node = new DefaultMutableTreeNode(label);
+		parent.add(node);
+
+		node.add(new DefaultMutableTreeNode(new NodeData(Environment.AUTUMN)));
+		node.add(new DefaultMutableTreeNode(new NodeData(Environment.WINTER)));
+
 		rearrangeNodes(node);
 	}
 

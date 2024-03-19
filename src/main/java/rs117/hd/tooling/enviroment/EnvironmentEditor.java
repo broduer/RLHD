@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,117 +50,128 @@ public class EnvironmentEditor extends JFrame {
 
 	public RuneliteColorPicker colorPicker;
 
-	public Map<String, PropertyData> properties = Map.ofEntries(
-		Map.entry("isUnderwater", new PropertyData(
+	public Map<String, PropertyData> properties = new LinkedHashMap<>() {{
+		// Environmental properties
+		put("isUnderwater", new PropertyData(
 			"Indicates if the environment is underwater.",
 			boolean.class,
 			(env, val) -> env.isUnderwater = castToBoolean(val),
 			env -> String.valueOf(env.isUnderwater)
-		)),
-		Map.entry("allowSkyOverride", new PropertyData(
+		));
+		put("allowSkyOverride", new PropertyData(
 			"Allows overriding the sky.",
 			boolean.class,
 			(env, val) -> env.allowSkyOverride = castToBoolean(val),
 			env -> String.valueOf(env.allowSkyOverride)
-		)),
-		Map.entry("lightningEffects", new PropertyData(
+		));
+		put("lightningEffects", new PropertyData(
 			"Enables lightning effects.",
 			boolean.class,
 			(env, val) -> env.lightningEffects = castToBoolean(val),
 			env -> String.valueOf(env.lightningEffects)
-		)),
+		));
 
-		Map.entry("ambientColor", new PropertyData(
+		// Light properties
+		put("ambientColor", new PropertyData(
 			"Ambient light color in sRGB, specified as a hex color code or an array.",
 			Color.class,
 			(env, val) -> env.ambientColor = castToColor(val),
 			env -> getColorValue(env.ambientColor)
-		)),
-		Map.entry("ambientStrength", new PropertyData(
+		));
+		put("ambientStrength", new PropertyData(
 			"Ambient light strength multiplier. Defaults to 1.",
 			float.class,
 			(env, val) -> env.ambientStrength = castToFloat(val),
 			env -> String.valueOf(env.ambientStrength)
-		)),
-		Map.entry("directionalColor", new PropertyData(
+		));
+		put("directionalColor", new PropertyData(
 			"Directional light color in sRGB, specified as a hex color code or an array.",
 			Color.class,
 			(env, val) -> env.directionalColor = castToColor(val),
 			env -> getColorValue(env.directionalColor)
-		)),
-		Map.entry("directionalStrength", new PropertyData(
+		));
+		put("directionalStrength", new PropertyData(
 			"Directional light strength multiplier. Defaults to 0.25.",
 			float.class,
 			(env, val) -> env.directionalStrength = castToFloat(val),
 			env -> String.valueOf(env.directionalStrength)
-		)),
-		Map.entry("waterColor", new PropertyData(
+		));
+
+		// Water properties
+		put("waterColor", new PropertyData(
 			"Water color in sRGB, specified as a hex color code or an array.",
 			Color.class,
 			(env, val) -> env.waterColor = castToColor(val),
 			env -> getColorValue(env.waterColor)
-		)),
-		Map.entry("waterCausticsColor", new PropertyData(
+		));
+		put("waterCausticsColor", new PropertyData(
 			"Water caustics color in sRGB (as hex or array). Defaults to the environment's directional light color.",
 			Color.class,
 			(env, val) -> env.waterCausticsColor = castToColor(val),
 			env -> getColorValue(env.waterCausticsColor)
-		)),
-		Map.entry("waterCausticsStrength", new PropertyData(
+		));
+		put("waterCausticsStrength", new PropertyData(
 			"Water caustics strength. Defaults to the environment's directional light strength.",
 			float.class,
 			(env, val) -> env.waterCausticsStrength = castToFloat(val),
 			env -> String.valueOf(env.waterCausticsStrength)
-		)),
-		Map.entry("underglowColor", new PropertyData(
+		));
+
+		// Underglow properties
+		put("underglowColor", new PropertyData(
 			"Underglow color in sRGB (as hex or array). Acts as light emanating from the ground.",
 			Color.class,
 			(env, val) -> env.underglowColor = castToColor(val),
 			env -> getColorValue(env.underglowColor)
-		)),
-		Map.entry("underglowStrength", new PropertyData(
+		));
+		put("underglowStrength", new PropertyData(
 			"Underglow strength multiplier. Acts as light emanating from the ground.",
 			float.class,
 			(env, val) -> env.underglowStrength = castToFloat(val),
 			env -> String.valueOf(env.underglowStrength)
-		)),
-		Map.entry("sunAngles", new PropertyData(
+		));
+
+		// Other environmental effects
+		put("sunAngles", new PropertyData(
 			"The sun's altitude and azimuth specified in degrees in the horizontal coordinate system.",
 			boolean.class,
 			(env, val) -> env.lightningEffects = castToBoolean(val),
 			env -> String.valueOf(env.lightningEffects)
-		)),
-		Map.entry("fogColor", new PropertyData(
+		));
+		put("fogColor", new PropertyData(
 			"Sky/fog color in sRGB, specified as a hex color code or an array.",
 			Color.class,
 			(env, val) -> env.fogColor = castToColor(val),
 			env -> getColorValue(env.fogColor)
-		)),
-		Map.entry("fogDepth", new PropertyData(
+		));
+		put("fogDepth", new PropertyData(
 			"Fog depth normally ranging from 0 to 100, which combined with draw distance decides the fog amount. Defaults to 25.",
 			float.class,
 			(env, val) -> env.fogDepth = castToFloat(val),
 			env -> String.valueOf(env.fogDepth)
-		)),
-		Map.entry("groundFogStart", new PropertyData(
+		));
+
+		// Ground fog properties
+		put("groundFogStart", new PropertyData(
 			"Only matters with groundFogOpacity > 0. Specified in local units.",
 			int.class,
 			(env, val) -> env.groundFogStart = castToInt(val),
 			env -> String.valueOf(env.groundFogStart)
-		)),
-		Map.entry("groundFogEnd", new PropertyData(
+		));
+		put("groundFogEnd", new PropertyData(
 			"Only matters with groundFogOpacity > 0. Specified in local units.",
 			int.class,
 			(env, val) -> env.groundFogEnd = castToInt(val),
 			env -> String.valueOf(env.groundFogEnd)
-		)),
-		Map.entry("groundFogOpacity", new PropertyData(
+		));
+		put("groundFogOpacity", new PropertyData(
 			"Ground fog opacity ranging from 0 to 1, meaning no ground fog and full ground fog respectively. Defaults to 0.",
 			int.class,
 			(env, val) -> env.groundFogOpacity = castToInt(val),
 			env -> String.valueOf(env.groundFogOpacity)
-		))
-	);
+		));
+	}};
+
 
 	@Inject
 	public EnvironmentEditor() {

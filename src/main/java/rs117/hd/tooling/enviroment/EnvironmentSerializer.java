@@ -24,12 +24,12 @@ public class EnvironmentSerializer implements JsonSerializer<Environment> {
 	public JsonElement serialize(Environment src, Type typeOfSrc, JsonSerializationContext context) {
 		JsonObject jsonObject = new JsonObject();
 
-		if (src.area != Area.NONE) {
+
 			if (src.key != null) {
 				jsonObject.addProperty("key", src.key);
 			}
 
-			if (src.area != null) {
+			if (src.area != null && src.area != Area.NONE) {
 				jsonObject.addProperty("area", src.area.toString());
 			}
 
@@ -101,7 +101,7 @@ public class EnvironmentSerializer implements JsonSerializer<Environment> {
 				jsonObject.add("groundFogOpacity", serializeFloat(src.groundFogOpacity));
 			}
 
-		}
+
 		return jsonObject;
 	}
 
