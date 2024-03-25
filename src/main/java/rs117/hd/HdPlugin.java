@@ -84,6 +84,7 @@ import rs117.hd.config.ShadingMode;
 import rs117.hd.config.ShadowMode;
 import rs117.hd.config.UIScalingMode;
 import rs117.hd.config.VanillaShadowMode;
+import rs117.hd.config.WaterTransparencyType;
 import rs117.hd.data.WaterType;
 import rs117.hd.data.environments.Area;
 import rs117.hd.data.materials.Material;
@@ -352,6 +353,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 	private int uniExpandedMapLoadingChunks;
 	private int uniWaterColorLight;
 	private int uniWaterColorMid;
+	private int uniWaterTransparencyType;
+	private int uniWaterTransparency;
 	private int uniWaterColorDark;
 	private int uniAmbientStrength;
 	private int uniAmbientColor;
@@ -406,6 +409,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 	public boolean configTzhaarHD;
 	public boolean configProjectileLights;
 	public boolean configNpcLights;
+	public WaterTransparencyType waterTransparencyType;
+	public int waterTransparency;
 	public boolean configHideFakeShadows;
 	public boolean configLegacyGreyColors;
 	public boolean configModelBatching;
@@ -874,6 +879,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		uniFogDepth = glGetUniformLocation(glSceneProgram, "fogDepth");
 		uniWaterColorLight = glGetUniformLocation(glSceneProgram, "waterColorLight");
 		uniWaterColorMid = glGetUniformLocation(glSceneProgram, "waterColorMid");
+		uniWaterTransparency = glGetUniformLocation(glSceneProgram, "waterTransparency");
+		uniWaterTransparencyType = glGetUniformLocation(glSceneProgram, "waterTransparencyType");
 		uniWaterColorDark = glGetUniformLocation(glSceneProgram, "waterColorDark");
 		uniDrawDistance = glGetUniformLocation(glSceneProgram, "drawDistance");
 		uniExpandedMapLoadingChunks = glGetUniformLocation(glSceneProgram, "expandedMapLoadingChunks");
@@ -2079,6 +2086,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 			}));
 			glUniform3fv(uniWaterColorLight, waterColorLight);
 			glUniform3fv(uniWaterColorMid, waterColorMid);
+			glUniform1f(uniWaterTransparencyType, waterTransparencyType.ordinal());
+			glUniform1f(uniWaterTransparency, waterTransparency);
 			glUniform3fv(uniWaterColorDark, waterColorDark);
 
 			float brightness = config.brightness() / 20f;
@@ -2590,6 +2599,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		configTzhaarHD = config.hdTzHaarReskin();
 		configProjectileLights = config.projectileLights();
 		configNpcLights = config.npcLights();
+		waterTransparencyType = config.waterTransparencyType();
+		waterTransparency = config.waterTransparencyPercentage();
 		configVanillaShadowMode = config.vanillaShadowMode();
 		configHideFakeShadows = configVanillaShadowMode != VanillaShadowMode.SHOW;
 		configLegacyGreyColors = config.legacyGreyColors();
