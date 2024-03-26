@@ -61,7 +61,7 @@ class SceneUploader {
 	public static final int EXCLUDED_FROM_SCENE_BUFFER = 0xFFFFFFFF;
 	public static final int SCENE_OFFSET = (Constants.EXTENDED_SCENE_SIZE - Constants.SCENE_SIZE) / 2; // offset for sxy -> msxy
 
-	private static final float[] UP_NORMAL = { 0, -1, 0 };
+	public static final float[] UP_NORMAL = { 0, -1, 0 };
 
 	@Inject
 	private Client client;

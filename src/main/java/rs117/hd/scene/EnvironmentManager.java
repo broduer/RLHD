@@ -151,6 +151,9 @@ public class EnvironmentManager {
 	@Nonnull
 	private Environment currentEnvironment = Environment.NONE;
 
+	@Inject
+	private MinimapRenderer minimapRenderer;
+
 	public void startUp() {
 		fileWatcher = ENVIRONMENTS_PATH.watch((path, first) -> {
 			try {
@@ -260,9 +263,14 @@ public class EnvironmentManager {
 				currentSunAngles[i] = hermite(startSunAngles[i], targetSunAngles[i], t);
 			currentUnderwaterCausticsColor = hermite(startUnderwaterCausticsColor, targetUnderwaterCausticsColor, t);
 			currentUnderwaterCausticsStrength = hermite(startUnderwaterCausticsStrength, targetUnderwaterCausticsStrength, t);
+			minimapRenderer.updateMinimapLighting = true;
 		}
 
 		updateLightning();
+
+		if (minimapRenderer.shouldUpdateMinimapLighting()) {
+			minimapRenderer.applyLighting(sceneContext);
+		}
 	}
 
 	/**
@@ -389,6 +397,7 @@ public class EnvironmentManager {
 
 		// Fall back to the default environment
 		sceneContext.environments.add(Environment.DEFAULT);
+		minimapRenderer.updateMinimapLighting = true;
 	}
 
 	/* lightning */

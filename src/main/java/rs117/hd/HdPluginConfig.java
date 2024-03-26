@@ -37,6 +37,7 @@ import rs117.hd.config.Contrast;
 import rs117.hd.config.DefaultSkyColor;
 import rs117.hd.config.FogDepthMode;
 import rs117.hd.config.MaxDynamicLights;
+import rs117.hd.config.MinimapStyle;
 import rs117.hd.config.Saturation;
 import rs117.hd.config.SeasonalTheme;
 import rs117.hd.config.ShadingMode;
@@ -96,6 +97,23 @@ public interface HdPluginConfig extends Config
 	)
 	default int expandedMapLoadingChunks() {
 		return 3;
+	}
+
+	String KEY_MINIMAP_STYLE = "minimapStyle";
+	@ConfigItem(
+		keyName = KEY_MINIMAP_STYLE,
+		name = "Improved Minimap",
+		description =
+			"Edits the minimap style.<br>" +
+			"Runelite - Allow runelite to decide what map to use.<br>" +
+			"Flat - Default oldschool map with 117 paths and lighting.<br>" +
+			"HD - HD map like 2008, with 117 paths and lighting.<br>" +
+			"HD - 2008 Lighting - HD map like 2008.",
+		position = 2,
+		section = generalSettings
+	)
+	default MinimapStyle minimapType() {
+		return MinimapStyle.DEFAULT;
 	}
 
 	@ConfigItem(

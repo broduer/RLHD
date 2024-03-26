@@ -78,6 +78,7 @@ import org.lwjgl.opengl.*;
 import org.lwjgl.system.Callback;
 import org.lwjgl.system.Configuration;
 import rs117.hd.config.AntiAliasingMode;
+import rs117.hd.config.MinimapStyle;
 import rs117.hd.config.SeasonalTheme;
 import rs117.hd.config.ShadingMode;
 import rs117.hd.config.ShadowMode;
@@ -98,6 +99,7 @@ import rs117.hd.overlays.FrameTimer;
 import rs117.hd.overlays.Timer;
 import rs117.hd.scene.EnvironmentManager;
 import rs117.hd.scene.LightManager;
+import rs117.hd.scene.MinimapRenderer;
 import rs117.hd.scene.ModelOverrideManager;
 import rs117.hd.scene.ProceduralGenerator;
 import rs117.hd.scene.SceneContext;
@@ -211,6 +213,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 
 	@Inject
 	private ModelHasher modelHasher;
+
+	@Inject
+	public MinimapRenderer minimapRenderer;
 
 	@Inject
 	private DeveloperTools developerTools;
@@ -404,6 +409,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 	public boolean configPreserveVanillaNormals;
 	public ShadowMode configShadowMode;
 	public SeasonalTheme configSeasonalTheme;
+	public MinimapStyle configMinimapStyle;
 	public VanillaShadowMode configVanillaShadowMode;
 	public int configMaxDynamicLights;
 
@@ -520,6 +526,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 				lwjglInitialized = true;
 				checkGLErrors();
 
+				if (configMinimapStyle != MinimapStyle.RUNELITE)
+					client.setMinimapTileDrawer(minimapRenderer::drawTile);
+
 				if (log.isDebugEnabled() && glCaps.glDebugMessageControl != 0) {
 					debugCallback = GLUtil.setupDebugMessageCallback();
 					if (debugCallback != null) {
@@ -622,6 +631,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 			if (scene != null)
 				scene.setMinLevel(0);
 
+			if (configMinimapStyle != MinimapStyle.RUNELITE)
+				client.setMinimapTileDrawer(null);
 			client.setGpuFlags(0);
 			client.setDrawCallbacks(null);
 			client.setUnlockedFps(false);
@@ -2299,6 +2310,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 				proceduralGenerator.generateSceneData(context);
 				environmentManager.loadSceneEnvironments(context);
 				sceneUploader.upload(context);
+				minimapRenderer.prepareScene(context);
 			}
 		} catch (OutOfMemoryError oom) {
 			log.error("Ran out of memory while loading scene (32-bit: {}, low memory mode: {})",
@@ -2331,6 +2343,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		} else {
 			initTileHeightMap(scene);
 		}
+
+		minimapRenderer.updateMinimapLighting = true;
 
 		lightManager.loadSceneLights(nextSceneContext, sceneContext);
 
@@ -2430,6 +2444,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		configUndoVanillaShading = config.shadingMode() != ShadingMode.VANILLA;
 		configPreserveVanillaNormals = config.preserveVanillaNormals();
 		configSeasonalTheme = config.seasonalTheme();
+		configMinimapStyle = config.minimapType();
+		minimapRenderer.updateConfigs();
 
 		if (configSeasonalTheme == SeasonalTheme.AUTOMATIC) {
 			var time = ZonedDateTime.now(ZoneOffset.UTC);
@@ -2505,6 +2521,11 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 							case KEY_UI_SCALING_MODE:
 							case KEY_VANILLA_COLOR_BANDING:
 								recompilePrograms = true;
+								break;
+							case KEY_MINIMAP_STYLE:
+								// TODO: hook this in with the rest
+								configMinimapStyle = config.minimapType();
+								minimapRenderer.updateConfigs();
 								break;
 							case KEY_SHADOW_MODE:
 							case KEY_SHADOW_TRANSPARENCY:
