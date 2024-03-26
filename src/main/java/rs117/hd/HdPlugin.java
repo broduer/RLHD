@@ -57,11 +57,13 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.*;
 import net.runelite.api.hooks.*;
+import net.runelite.api.widgets.*;
 import net.runelite.client.RuneLite;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -149,6 +151,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 	public static final int TEXTURE_UNIT_GAME = TEXTURE_UNIT_BASE + 1;
 	public static final int TEXTURE_UNIT_SHADOW_MAP = TEXTURE_UNIT_BASE + 2;
 	public static final int TEXTURE_UNIT_TILE_HEIGHT_MAP = TEXTURE_UNIT_BASE + 3;
+	public static final int TEXTURE_UNIT_MINIMAP_IMAGE = TEXTURE_UNIT_BASE + 4;
+	public static final int TEXTURE_UNIT_MINIMAP_MASK = TEXTURE_UNIT_BASE + 5;
 
 	public static final int UNIFORM_BLOCK_CAMERA = 0;
 	public static final int UNIFORM_BLOCK_MATERIALS = 1;
@@ -177,6 +181,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 
 	@Inject
 	private ClientThread clientThread;
+
+	@Inject
+	private SpriteManager spriteManager;
 
 	@Inject
 	private DrawManager drawManager;
@@ -289,6 +296,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 	private int shadowMapResolution;
 	private int fboShadowMap;
 	private int texShadowMap;
+	private int texMinimapMask;
+	private int texMinimapImage;
 
 	private int texTileHeightMap;
 
@@ -380,6 +389,14 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 	private int uniProjectionMatrix;
 	private int uniLightProjectionMatrix;
 	private int uniShadowMap;
+
+
+	private int uniMinimapEnabled;
+	private int uniMinimapMask;
+	private int uniMinimapImage;
+	private int uniMinimapLocation;
+	private int uniMinimapPlayerLocation;
+
 	private int uniUiTexture;
 	private int uniTexSourceDimensions;
 	private int uniTexTargetDimensions;
@@ -577,6 +594,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 				initShaderHotswapping();
 				initInterfaceTexture();
 				initShadowMapFbo();
+				initMinimapMask();
 
 				checkGLErrors();
 
@@ -855,6 +873,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 
 		glUseProgram(glUiProgram);
 		glUniform1i(uniUiTexture, TEXTURE_UNIT_UI - TEXTURE_UNIT_BASE);
+		glUniform1i(uniMinimapMask, TEXTURE_UNIT_MINIMAP_MASK - TEXTURE_UNIT_BASE);
+		glUniform1i(uniMinimapImage, TEXTURE_UNIT_MINIMAP_IMAGE - TEXTURE_UNIT_BASE);
 
 		glUseProgram(0);
 	}
@@ -901,6 +921,11 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		uniTexSourceDimensions = glGetUniformLocation(glUiProgram, "sourceDimensions");
 		uniUiColorBlindnessIntensity = glGetUniformLocation(glUiProgram, "colorBlindnessIntensity");
 		uniUiAlphaOverlay = glGetUniformLocation(glUiProgram, "alphaOverlay");
+		uniMinimapMask = glGetUniformLocation(glUiProgram, "minimapMask");
+		uniMinimapImage = glGetUniformLocation(glUiProgram, "minimapImage");
+		uniMinimapLocation = glGetUniformLocation(glUiProgram, "minimapLocation");
+		uniMinimapPlayerLocation = glGetUniformLocation(glUiProgram, "minimapPlayerLocation");
+		uniMinimapEnabled = glGetUniformLocation(glUiProgram, "enabledMinimap");
 
 		uniBlockMaterials = glGetUniformBlockIndex(glSceneProgram, "MaterialUniforms");
 		uniBlockWaterTypes = glGetUniformBlockIndex(glSceneProgram, "WaterTypeUniforms");
@@ -1340,6 +1365,100 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 
 		// Reset
 		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	public void initMinimapMask() {
+		texMinimapMask = glGenTextures();
+		glActiveTexture(TEXTURE_UNIT_MINIMAP_MASK);
+		glBindTexture(GL_TEXTURE_2D, texMinimapMask);
+
+		int minimapMaskSprite = client.isResized() ?
+			SpriteID.RESIZEABLE_MODE_MINIMAP_ALPHA_MASK :
+			SpriteID.FIXED_MODE_MINIMAP_ALPHA_MASK;
+		BufferedImage image = spriteManager.getSprite(minimapMaskSprite, 0);
+		if (image == null)
+			throw new RuntimeException("Failed to get minimap mask sprite");
+
+		int width = image.getWidth();
+		int height = image.getHeight();
+
+		int[] pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+		IntBuffer pixelBuffer = BufferUtils.createIntBuffer(width * height);
+		IntBuffer flippedBuffer = BufferUtils.createIntBuffer(width * height);
+		pixelBuffer.put(pixels).flip();
+		for (int y = height - 1; y >= 0; y--) {
+			for (int x = 0; x < width; x++) {
+				flippedBuffer.put(pixelBuffer.get(y * width + x));
+			}
+		}
+		flippedBuffer.flip();
+
+		// Go from TYPE_4BYTE_ABGR in the BufferedImage to RGBA
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, flippedBuffer);
+		checkGLErrors();
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		checkGLErrors();
+
+		// Reset
+		glActiveTexture(TEXTURE_UNIT_UI);
+	}
+
+	public void uploadMinimapImage() {
+		texMinimapImage = glGenTextures();
+		glActiveTexture(TEXTURE_UNIT_MINIMAP_IMAGE);
+		glBindTexture(GL_TEXTURE_2D, texMinimapImage);
+
+		BufferedImage image = minimapRenderer.miniMapImageCircle ;
+		int width = 416;
+		int height = 416;
+
+		// Ensure the pixels array matches the expected size
+		int[] pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+		if (pixels.length != width * height) {
+			throw new IllegalArgumentException("Pixel array size does not match image dimensions.");
+		}
+
+		IntBuffer pixelBuffer = BufferUtils.createIntBuffer(pixels.length);
+		IntBuffer flippedBuffer = BufferUtils.createIntBuffer(pixels.length);
+
+		// Fill the pixel buffer and prepare it for reading
+		pixelBuffer.put(pixels).flip();
+
+		// Generate the flipped buffer
+		for (int y = height - 1; y >= 0; y--) {
+			for (int x = 0; x < width; x++) {
+				int index = y * width + x;
+				if (index < pixelBuffer.limit()) {
+					flippedBuffer.put(pixelBuffer.get(index));
+				} else {
+					throw new IndexOutOfBoundsException("Trying to access index " + index + " in the pixel buffer with limit " + pixelBuffer.limit());
+				}
+			}
+		}
+
+		// Prepare the flipped buffer for reading
+		flippedBuffer.flip();
+
+		// Upload the flipped pixel data to the GPU
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, flippedBuffer);
+
+		checkGLErrors();
+
+		// Set texture parameters
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+		checkGLErrors();
+
+		// Reset the active texture unit
+		glActiveTexture(TEXTURE_UNIT_UI);
 	}
 
 	private void destroyShadowMapFbo() {
@@ -2171,6 +2290,13 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		glUniform1f(uniUiColorBlindnessIntensity, config.colorBlindnessIntensity() / 100f);
 		glUniform4fv(uniUiAlphaOverlay, ColorUtils.srgba(overlayColor));
 
+		glUniform1f(uniMinimapEnabled, config.openGLMinimap() ? 1: 0);
+
+		glUniform2i(uniMinimapLocation, getMinimapLocation().getX(), getMinimapLocation().getY());
+		Point minimapPos = minimapRenderer.getPlayerMinimapLocation();
+
+		glUniform2i(uniMinimapPlayerLocation, minimapPos.getX(), minimapPos.getY());
+
 		if (client.isStretchedEnabled()) {
 			Dimension dim = client.getStretchedDimensions();
 			glDpiAwareViewport(0, 0, dim.width, dim.height);
@@ -2203,6 +2329,22 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_BLEND);
 	}
+
+	public Point getMinimapLocation() {
+		Widget minimapDrawWidget;
+		if (client.isResized()) {
+			if (client.getVarbitValue(Varbits.SIDE_PANELS) == 1) {
+				minimapDrawWidget = client.getWidget(WidgetInfo.RESIZABLE_MINIMAP_DRAW_AREA);
+			} else {
+				minimapDrawWidget = client.getWidget(WidgetInfo.RESIZABLE_MINIMAP_STONES_DRAW_AREA);
+			}
+		} else {
+			minimapDrawWidget = client.getWidget(ComponentID.FIXED_VIEWPORT_MINIMAP_DRAW_AREA);
+		}
+
+		return minimapDrawWidget == null ? new Point(0,0) : minimapDrawWidget.getCanvasLocation();
+	}
+
 
 	/**
 	 * Convert the front framebuffer to an Image
@@ -2311,6 +2453,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 				environmentManager.loadSceneEnvironments(context);
 				sceneUploader.upload(context);
 				minimapRenderer.prepareScene(context);
+
 			}
 		} catch (OutOfMemoryError oom) {
 			log.error("Ran out of memory while loading scene (32-bit: {}, low memory mode: {})",
@@ -2523,9 +2666,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 								recompilePrograms = true;
 								break;
 							case KEY_MINIMAP_STYLE:
-								// TODO: hook this in with the rest
 								configMinimapStyle = config.minimapType();
 								minimapRenderer.updateConfigs();
+								minimapRenderer.generateMinimapImage();
 								break;
 							case KEY_SHADOW_MODE:
 							case KEY_SHADOW_TRANSPARENCY:

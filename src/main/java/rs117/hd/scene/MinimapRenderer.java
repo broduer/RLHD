@@ -127,6 +127,85 @@ public class MinimapRenderer {
 		}
 	}
 
+	public void generateMinimapImage() {
+		mapCaptured = false;
+		captureMinimap();
+	}
+
+	public void captureMinimap() {
+		if (mapCaptured) return;
+		SpritePixels map = client.drawInstanceMap(client.getPlane());
+		// larger instance map doesn't fit on fixed mode, so reduce to 104x104
+		BufferedImage image = minimapToBufferedImage(map, client.isResized() ? client.getExpandedMapLoading() : 0);
+		synchronized (this)
+		{
+			miniMapImage = image;
+			createSmallMap();
+			plugin.uploadMinimapImage();
+			mapCaptured = true;
+		}
+	}
+
+	private void createSmallMap() {
+		miniMapImageCircle = extractSquarePixels(miniMapImage);
+	}
+
+	private static BufferedImage extractSquarePixels(BufferedImage originalImage) {
+
+		//Creates a smaller image as the big one is not needed
+
+		int squareSize = 416;
+
+		// Use the square as a mask to extract pixels from the original image
+		BufferedImage resultImage = new BufferedImage(squareSize, squareSize, BufferedImage.TYPE_INT_ARGB);
+		for (int i = 0; i < squareSize; i++) {
+			for (int j = 0; j < squareSize; j++) {
+				resultImage.setRGB(i, j, originalImage.getRGB(i, j));
+			}
+		}
+
+		return resultImage;
+	}
+
+	private static BufferedImage minimapToBufferedImage(SpritePixels spritePixels, int expandedChunks)
+	{
+		int width = spritePixels.getWidth();
+		int height = spritePixels.getHeight();
+		int[] pixels = spritePixels.getPixels();
+		BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		img.setRGB(0, 0, width, height, pixels, 0, width);
+		int maxChunks = ((Constants.EXTENDED_SCENE_SIZE - Constants.SCENE_SIZE) / 2) / 8;
+		if (expandedChunks < maxChunks)
+		{
+			int cropChunks = maxChunks - expandedChunks;
+			img = img.getSubimage(
+				TILE_SIZE * (cropChunks * 8),
+				TILE_SIZE * (cropChunks * 8),
+				(Constants.SCENE_SIZE + expandedChunks * 8) * TILE_SIZE,
+				(Constants.SCENE_SIZE + expandedChunks * 8) * TILE_SIZE
+			);
+		}
+
+
+		return img;
+	}
+
+
+
+	public Point getPlayerMinimapLocation() {
+		if (client.getLocalPlayer() == null) {
+			return new Point(0, 0);
+		}
+		LocalPoint playerLoc = client.getLocalPlayer().getLocalLocation();
+		int expandedChunks = client.isResized() ? client.getExpandedMapLoading() : 0;
+		int tileX = playerLoc.getSceneX() + expandedChunks * 8;
+		int tileY = playerLoc.getSceneY() + expandedChunks * 8;
+		int x = tileX * TILE_SIZE;
+		int y = tileY * TILE_SIZE;
+
+		return new Point(x, y);
+	}
+
 	public void prepareScene(SceneContext sceneContext) {
 		final Scene scene = sceneContext.scene;
 		boolean classicLighting = config.minimapType() == MinimapStyle.HD2008;
@@ -674,11 +753,16 @@ public class MinimapRenderer {
 
 		frameTimer.begin(Timer.MINIMAP_DRAW);
 
-		if (configUseShadedMinimap) {
-			drawMinimapShaded(tile, tx, ty, px0, py0, px1, py1);
+		if (!mapCaptured || !plugin.config.openGLMinimap()) {
+			if (configUseShadedMinimap) {
+				drawMinimapShaded(tile, tx, ty, px0, py0, px1, py1);
+			} else {
+				drawMinimapOSRS(tile, tx, ty, px0, py0, px1, py1);
+			}
 		} else {
-			drawMinimapOSRS(tile, tx, ty, px0, py0, px1, py1);
+			client.getRasterizer().fillRectangle(px0, py0, px1 - px0, py1 - py0, 12345678);
 		}
+
 
 		frameTimer.end(Timer.MINIMAP_DRAW);
 	}

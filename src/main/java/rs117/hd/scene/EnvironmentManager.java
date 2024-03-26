@@ -270,6 +270,7 @@ public class EnvironmentManager {
 
 		if (minimapRenderer.shouldUpdateMinimapLighting()) {
 			minimapRenderer.applyLighting(sceneContext);
+			minimapRenderer.generateMinimapImage();
 		}
 	}
 

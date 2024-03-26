@@ -14,6 +14,7 @@ import rs117.hd.HdPlugin;
 import rs117.hd.data.environments.Area;
 import rs117.hd.overlays.FrameTimerOverlay;
 import rs117.hd.overlays.LightGizmoOverlay;
+import rs117.hd.overlays.MinimapOverlay;
 import rs117.hd.overlays.ShadowMapOverlay;
 import rs117.hd.overlays.TileInfoOverlay;
 
@@ -25,6 +26,8 @@ public class DeveloperTools implements KeyListener {
 	private static final Keybind KEY_TOGGLE_SHADOW_MAP_OVERLAY = new Keybind(KeyEvent.VK_F5, InputEvent.CTRL_DOWN_MASK);
 	private static final Keybind KEY_TOGGLE_LIGHT_GIZMO_OVERLAY = new Keybind(KeyEvent.VK_F6, InputEvent.CTRL_DOWN_MASK);
 	private static final Keybind KEY_TOGGLE_FREEZE_FRAME = new Keybind(KeyEvent.VK_ESCAPE, InputEvent.SHIFT_DOWN_MASK);
+
+	private static final Keybind KEY_TOGGLE_MAP_OVERLAY  = new Keybind(KeyEvent.VK_F7, InputEvent.CTRL_DOWN_MASK);
 
 	@Inject
 	private EventBus eventBus;
@@ -47,11 +50,15 @@ public class DeveloperTools implements KeyListener {
 	@Inject
 	private LightGizmoOverlay lightGizmoOverlay;
 
+	@Inject
+	public MinimapOverlay minimapOverlay;
+
 	private boolean keyBindingsEnabled = false;
 	private boolean tileInfoOverlayEnabled = false;
 	private boolean frameTimingsOverlayEnabled = false;
 	private boolean shadowMapOverlayEnabled = false;
 	private boolean lightGizmoOverlayEnabled = false;
+	private boolean minimapOverlayEnabled = false;
 
 	public void activate() {
 		// Listen for commands
@@ -69,6 +76,7 @@ public class DeveloperTools implements KeyListener {
 		frameTimerOverlay.setActive(frameTimingsOverlayEnabled);
 		shadowMapOverlay.setActive(shadowMapOverlayEnabled);
 		lightGizmoOverlay.setActive(lightGizmoOverlayEnabled);
+		minimapOverlay.setActive(minimapOverlayEnabled);
 
 		// Check for any out of bounds areas
 		for (Area area : Area.values()) {
@@ -91,6 +99,7 @@ public class DeveloperTools implements KeyListener {
 		frameTimerOverlay.setActive(false);
 		shadowMapOverlay.setActive(false);
 		lightGizmoOverlay.setActive(false);
+		minimapOverlay.setActive(false);
 	}
 
 	@Subscribe
@@ -124,6 +133,9 @@ public class DeveloperTools implements KeyListener {
 					keyManager.unregisterKeyListener(this);
 				}
 				break;
+			case "minimap":
+				minimapOverlay.setActive(minimapOverlayEnabled = !minimapOverlayEnabled);
+				break;
 		}
 	}
 
@@ -139,6 +151,8 @@ public class DeveloperTools implements KeyListener {
 			lightGizmoOverlay.setActive(lightGizmoOverlayEnabled = !lightGizmoOverlayEnabled);
 		} else if (KEY_TOGGLE_FREEZE_FRAME.matches(e)) {
 			plugin.toggleFreezeFrame();
+		} else if (KEY_TOGGLE_MAP_OVERLAY.matches(e)) {
+			minimapOverlay.setActive(minimapOverlayEnabled = !minimapOverlayEnabled);
 		} else {
 			return;
 		}

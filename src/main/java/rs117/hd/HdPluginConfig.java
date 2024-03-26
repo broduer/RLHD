@@ -803,6 +803,20 @@ public interface HdPluginConfig extends Config
 		return false;
 	}
 
+	String KEY_OPENGL_MINIMAP = "lowMemoryMode";
+	@ConfigItem(
+		keyName = KEY_OPENGL_MINIMAP,
+		name = "OpenGL Minimap",
+		description = "URGH.",
+		position = 7,
+		section = miscellaneousSettings
+	)
+	default boolean openGLMinimap() {
+		return true;
+	}
+
+
+
 
 	/*====== Experimental settings ======*/
 
