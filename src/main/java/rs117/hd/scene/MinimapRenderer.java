@@ -240,18 +240,8 @@ public class MinimapRenderer {
 			}
 			else
 			{
-				// set colors for the shoreline to create a foam effect in the water shader
-
-				colors[0] = colors[1] = colors[2] = colors[3] = 127;
-
-				if (sceneContext.vertexIsWater.containsKey(swVertexKey) && sceneContext.vertexIsLand.containsKey(swVertexKey))
-					colors[0] = 0;
-				if (sceneContext.vertexIsWater.containsKey(seVertexKey) && sceneContext.vertexIsLand.containsKey(seVertexKey))
-					colors[1] = 0;
-				if (sceneContext.vertexIsWater.containsKey(nwVertexKey) && sceneContext.vertexIsLand.containsKey(nwVertexKey))
-					colors[2] = 0;
-				if (sceneContext.vertexIsWater.containsKey(neVertexKey) && sceneContext.vertexIsLand.containsKey(neVertexKey))
-					colors[3] = 0;
+				Arrays.fill(colors, ColorUtils.srgbToPackedHsl(waterType.surfaceColor));
+				Arrays.fill(materials, getWater(waterType));
 			}
 
 
