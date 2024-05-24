@@ -250,6 +250,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 	@Inject
 	public MinimapRenderer minimapRenderer;
 
+	@Inject
 	private FishingSpotReplacer fishingSpotReplacer;
 
 
