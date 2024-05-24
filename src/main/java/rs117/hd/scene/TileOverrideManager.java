@@ -249,23 +249,21 @@ public class TileOverrideManager {
 		outer:
 		for (int id : ids) {
 			var entries = idMatchOverrides.get(id);
-			if (entries != null) {
-				for (var entry : entries) {
-					var area = entry.getKey();
-					if (area.containsPoint(worldPos)) {
-						match = entry.getValue();
-						match.queriedAsOverlay = (id & OVERLAY_FLAG) != 0;
-						break outer;
-					}
+			for (var entry : entries) {
+				var area = entry.getKey();
+				if (area.containsPoint(worldPos)) {
+					match = entry.getValue();
+					match.queriedAsOverlay = (id & OVERLAY_FLAG) != 0;
+					break outer;
 				}
 			}
 		}
 
 		for (var entry : anyMatchOverrides) {
-			var area = entry.getKey();
 			var override = entry.getValue();
 			if (override.index > match.index)
 				break;
+			var area = entry.getKey();
 			if (area.containsPoint(worldPos)) {
 				match = override;
 				break;
@@ -296,6 +294,8 @@ public class TileOverrideManager {
 					return replacement;
 				}
 			}
+			// Avoid accidentally keeping the old scene in memory
+			hslVars.setTile(null);
 		}
 
 		return override;

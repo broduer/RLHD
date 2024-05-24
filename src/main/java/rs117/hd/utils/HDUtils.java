@@ -55,6 +55,8 @@ public class HDUtils {
 	public static final float HALF_PI = PI / 2;
 	public static final float QUARTER_PI = PI / 2;
 
+	public static final float MAX_FLOAT_WITH_128TH_PRECISION = 1 << 16;
+
 	public static final int MAX_SNOW_LIGHTNESS = 70;
 
 	// directional vectors approximately opposite of the directional light used by the client
@@ -144,6 +146,10 @@ public class HDUtils {
 
 	public static int clamp(int value, int min, int max) {
 		return Math.min(Math.max(value, min), max);
+	}
+
+	public static double log2(double x) {
+		return Math.log(x) / Math.log(2);
 	}
 
 	public static int vertexHash(int[] vPos) {
@@ -301,13 +307,6 @@ public class HDUtils {
 		}
 
 		return new WorldPoint(baseX, baseY, plane);
-	}
-
-	public static int[] cameraSpaceToWorldPoint(Client client, int relativeX, int relativeZ) {
-		int localX = client.getCameraX2() + relativeX;
-		int localY = client.getCameraZ2() + relativeZ;
-		int plane = client.getPlane();
-		return localToWorld(client.getScene(), localX, localY, plane);
 	}
 
 	/**

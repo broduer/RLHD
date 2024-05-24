@@ -305,6 +305,7 @@ public enum Material {
 	GRAY_50(NONE, p -> p.setBrightness(ColorUtils.srgbToLinear(.5f))),
 	GRAY_25(NONE, p -> p.setBrightness(ColorUtils.srgbToLinear(.25f))),
 	BLACK(NONE, p -> p.setBrightness(0)),
+	PURE_BLACK(NONE, p -> p.setOverrideBaseColor(true).setBrightness(0)),
 
 	BLANK_GLOSS(WHITE, p -> p
 		.setSpecular(0.9f, 280)),
@@ -378,9 +379,6 @@ public enum Material {
 	GRUNGE_2_SHINY(GRUNGE_2, p -> p
 		.setSpecular(0.7f, 300)
 	),
-	GRUNGE_2_EADGARS_CAVE_FIX(GRUNGE_2, p -> p.setBrightness(0.65f)),
-	GRUNGE_2_TROLLHEIM_WALL_FIX_1(GRUNGE_2, p -> p.setBrightness(1.8f)),
-	GRUNGE_2_TROLLHEIM_WALL_FIX_2(GRUNGE_2, p -> p.setBrightness(1.2f)),
 	SUBMERGED_GRUNGE_2(GRUNGE_2, p -> p
 		.setFlowMap(UNDERWATER_FLOW_MAP)
 		.setFlowMapStrength(0.075f)
@@ -407,9 +405,17 @@ public enum Material {
 		.setSpecular(0.4f, 20)
 		.setBrightness(1.2f)
 	),
+	ROCK_3_SMOOTH(ROCK_3, p -> p
+		.setDisplacementScale(0)
+		.setTextureScale(1, 1, .15f)
+		.setSpecular(0.3f, 40)
+	),
 	ROCK_3_ORE(ROCK_3, p -> p
 		.setSpecular(1, 20)
 	),
+	EADGARS_CAVE_FIX(ROCK_3, p -> p.setBrightness(0.65f)),
+	TROLLHEIM_WALL_FIX_1(ROCK_3, p -> p.setBrightness(1.8f)),
+	TROLLHEIM_WALL_FIX_2(ROCK_3, p -> p.setBrightness(1.2f)),
 
 	ROCK_4_D,
 	ROCK_4_N,
@@ -449,13 +455,11 @@ public enum Material {
 	JAGGED_STONE_TILE_N,
 	JAGGED_STONE_TILE(p -> p
 		.setDisplacementMap(JAGGED_STONE_TILE_D)
+		.setDisplacementScale(.05f)
 		.setNormalMap(JAGGED_STONE_TILE_N)
 		.setSpecular(0.5f, 30)
 	),
-	POTTERY_OVEN_STONE(
-		JAGGED_STONE_TILE,
-		p -> p.setOverrideBaseColor(JAGGED_STONE_TILE.overrideBaseColor).setBrightness(0.3f)
-	),
+	POTTERY_OVEN_STONE(JAGGED_STONE_TILE, p -> p.setBrightness(0.3f)),
 
 	TILE_SMALL_1(p -> p
 		.setSpecular(0.8f, 70)),
@@ -523,14 +527,29 @@ public enum Material {
 		.setSpecular(0.3f, 30)
 	),
 	LIGHT_BARK(BARK, p -> p.setBrightness(1.75f)),
+	VERY_LIGHT_BARK(BARK, p -> p.setBrightness(2.75f)),
+	BARK_STONEPINE_N,
+	BARK_STONEPINE(p -> p
+		.setNormalMap(BARK_STONEPINE_N)
+		.setSpecular(0.3f, 30)
+	),
+	LIGHT_BARK_STONEPINE(BARK_STONEPINE, p -> p.setBrightness(1.75f)),
 	WOOD_GRAIN,
 	WOOD_GRAIN_2_N,
 	WOOD_GRAIN_2(p -> p
 		.setNormalMap(WOOD_GRAIN_2_N)
 		.setSpecular(0.3f, 30)
 	),
+	WOOD_GRAIN_2_SMOOTH(WOOD_GRAIN_2, p -> p
+		.setBrightness(1.1f)
+		.setTextureScale(1, 1, .2f)
+	),
 	WOOD_GRAIN_2_LIGHT(WOOD_GRAIN_2, p -> p
 		.setBrightness(1.1f)
+	),
+	WOOD_GRAIN_2_SMOOTH_LIGHT(WOOD_GRAIN_2, p -> p
+		.setBrightness(1.3f)
+		.setTextureScale(1, 1, .2f)
 	),
 	WOOD_GRAIN_2_WIDE(WOOD_GRAIN_2, p -> p
 		.setTextureScale(1.5f, 0.5f)
@@ -542,6 +561,7 @@ public enum Material {
 		.setNormalMap(WOOD_GRAIN_3_N)
 		.setSpecular(0.3f, 25)
 	),
+	WOOD_GRAIN_3_LIGHT(WOOD_GRAIN_3, p -> p.setBrightness(1.6f)),
 	DOCK_FENCE,
 	DOCK_FENCE_DARK(DOCK_FENCE, p -> p.setBrightness(0.6f)),
 
@@ -562,10 +582,13 @@ public enum Material {
 		.setSpecular(0.30f, 20)
 	),
 	HD_ROOF_SHINGLES_N,
+	HD_ROOF_SHINGLES_D,
 	HD_ROOF_SHINGLES_1(p -> p
 		.replaceIf(plugin -> plugin.configModelTextures, ROOF_SHINGLES_1)
-		.setSpecular(0.5f, 30)
+		.setSpecular(0.35f, 40)
 		.setNormalMap(HD_ROOF_SHINGLES_N)
+		.setDisplacementMap(HD_ROOF_SHINGLES_D)
+		.setDisplacementScale(0.11f)
 	),
 	HD_MARBLE_DARK(p -> p
 		.replaceIf(plugin -> plugin.configModelTextures, MARBLE_DARK)
@@ -633,6 +656,8 @@ public enum Material {
 		.setSpecular(0.7f, 80)),
 	METALLIC_2_HIGHGLOSS(METALLIC_2, p -> p
 		.setSpecular(1.1f, 80)),
+	METALLIC_2_SUPER_HIGHGLOSS(METALLIC_2, p -> p
+		.setSpecular(2.25f, 65)),
 	METALLIC_NONE_GLOSS(NONE, p -> p
 		.setSpecular(0.7f, 80)),
 	WATTLE_1,
@@ -672,7 +697,7 @@ public enum Material {
 		.setBrightness(0.9f)
 	),
 	HD_ROOF_BRICK_TILE_N,
-	HD_ROOF_BRICK_TILE(ROOF_BRICK_TILE, p -> p
+	HD_ROOF_BRICK_TILE(p -> p
 		.replaceIf(plugin -> plugin.configModelTextures, ROOF_BRICK_TILE)
 		.setSpecular(0.3f, 30)
 		.setNormalMap(HD_ROOF_BRICK_TILE_N)
@@ -883,7 +908,7 @@ public enum Material {
 		private float specularStrength;
 		private float specularGloss;
 		private float[] scrollSpeed = { 0, 0 };
-		private float[] textureScale = { 1, 1 };
+		private float[] textureScale = { 1, 1, 1 };
 		private List<Material> materialsToReplace = new ArrayList<>();
 		private Function<HdPlugin, Boolean> replacementCondition;
 
@@ -934,8 +959,9 @@ public enum Material {
 			return this;
 		}
 
-		Builder setTextureScale(float x, float y) {
-			this.textureScale = new float[] { x, y };
+		Builder setTextureScale(float... xyz) {
+			textureScale = Arrays.copyOf(textureScale, 3);
+			System.arraycopy(xyz, 0, textureScale, 0, Math.min(3, xyz.length));
 			return this;
 		}
 
@@ -975,7 +1001,7 @@ public enum Material {
 		consumer.accept(builder);
 		parent = builder.parent;
 		normalMap = builder.normalMap;
-		displacementMap = builder.displacementMap;
+		displacementMap = builder.displacementScale == 0 ? null : builder.displacementMap;
 		roughnessMap = builder.roughnessMap;
 		ambientOcclusionMap = builder.ambientOcclusionMap;
 		flowMap = builder.flowMap;

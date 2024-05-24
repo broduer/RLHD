@@ -39,7 +39,6 @@ import rs117.hd.config.DefaultSkyColor;
 import rs117.hd.scene.environments.Environment;
 import rs117.hd.utils.AABB;
 import rs117.hd.utils.FileWatcher;
-import rs117.hd.utils.HDUtils;
 import rs117.hd.utils.Props;
 import rs117.hd.utils.ResourcePath;
 
@@ -79,7 +78,7 @@ public class EnvironmentManager {
 
 	// when the current transition began, relative to plugin startup
 	private boolean transitionComplete = true;
-	private float transitionStartTime = 0;
+	private double transitionStartTime = 0;
 	private int[] previousPosition = new int[3];
 
 	private float[] startFogColor = new float[] { 0, 0, 0 };
@@ -244,7 +243,7 @@ public class EnvironmentManager {
 			currentWaterColor = targetWaterColor;
 		} else {
 			// interpolate between start and target values
-			float t = clamp((plugin.elapsedTime - transitionStartTime) / TRANSITION_DURATION, 0, 1);
+			float t = clamp((float) (plugin.elapsedTime - transitionStartTime) / TRANSITION_DURATION, 0, 1);
 			if (t >= 1)
 				transitionComplete = true;
 			currentFogColor = hermite(startFogColor, targetFogColor, t);
@@ -293,6 +292,9 @@ public class EnvironmentManager {
 			skipTransition = false;
 		}
 
+		if (currentEnvironment.instantTransition || newEnvironment.instantTransition)
+			skipTransition = true;
+
 		log.debug("changing environment from {} to {} (instant: {})", currentEnvironment, newEnvironment, skipTransition);
 		currentEnvironment = newEnvironment;
 		transitionComplete = false;
@@ -331,7 +333,7 @@ public class EnvironmentManager {
 			sunAngles = overworldEnv.sunAngles;
 		System.arraycopy(sunAngles, 0, targetSunAngles, 0, 2);
 
-		if (!config.atmosphericLighting())
+		if (!config.atmosphericLighting() && !env.force)
 			env = overworldEnv;
 		targetAmbientStrength = env.ambientStrength;
 		targetAmbientColor = env.ambientColor;
@@ -435,7 +437,7 @@ public class EnvironmentManager {
 		}
 
 		if (lightningEnabled && config.flashingEffects()) {
-			float t = HDUtils.clamp(lightningBrightness, 0, 1);
+			float t = clamp(lightningBrightness, 0, 1);
 			currentFogColor = lerp(currentFogColor, LIGHTNING_COLOR, t);
 			currentWaterColor = lerp(currentWaterColor, LIGHTNING_COLOR, t);
 		} else {
