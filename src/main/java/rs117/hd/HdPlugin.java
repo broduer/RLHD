@@ -43,6 +43,7 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -266,11 +267,15 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 	@Getter
 	private Gson gson;
 
+	public List<Double> intList = new ArrayList<>();
+
 	public GLCapabilities glCaps;
 	private Canvas canvas;
 	private AWTContext awtContext;
 	private Callback debugCallback;
 	private ComputeMode computeMode = ComputeMode.OPENGL;
+
+	private double lastZoom = -1;
 
 	private static final String LINUX_VERSION_HEADER =
 		"#version 420\n" +
@@ -430,7 +435,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 	private int uniMinimapImage;
 	private int uniMinimapLocation;
 	private int uniMinimapPlayerLocation;
-
+	private int uniResized;
+	private int uniMapAngle;
 	private int uniUiTexture;
 	private int uniTexSourceDimensions;
 	private int uniTexTargetDimensions;
@@ -971,6 +977,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		uniMinimapImage = glGetUniformLocation(glUiProgram, "minimapImage");
 		uniMinimapLocation = glGetUniformLocation(glUiProgram, "minimapLocation");
 		uniMinimapPlayerLocation = glGetUniformLocation(glUiProgram, "minimapPlayerLocation");
+		uniResized = glGetUniformLocation(glUiProgram, "isResized");
+		uniMapAngle = glGetUniformLocation(glUiProgram, "mapAngle");
 		uniMinimapEnabled = glGetUniformLocation(glUiProgram, "minimapEnabled");
 
 		uniBlockMaterials = glGetUniformBlockIndex(glSceneProgram, "MaterialUniforms");
@@ -1521,8 +1529,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		// Set texture parameters
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 
 		checkGLErrors();
@@ -2339,6 +2347,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 
 		glUniform2iv(uniMinimapLocation, getMinimapLocation());
 		glUniform2iv(uniMinimapPlayerLocation, minimapRenderer.getPlayerMinimapLocation());
+		glUniform1i(uniResized, client.isResized() ? 1 : 0);
+		glUniform1f(uniMapAngle, (float) client.getCameraYaw());
 
 		if (client.isStretchedEnabled()) {
 			Dimension dim = client.getStretchedDimensions();
@@ -3329,6 +3339,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 				reuploadScene();
 			--gameTicksUntilSceneReload;
 		}
+
+		//System.out.println(client.getMinimapZoom());
+		System.out.println(client.getMapAngle());
 
 		fishingSpotReplacer.update();
 
