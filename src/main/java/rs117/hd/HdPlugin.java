@@ -80,8 +80,8 @@ import org.lwjgl.opengl.*;
 import org.lwjgl.system.Callback;
 import org.lwjgl.system.Configuration;
 import rs117.hd.config.AntiAliasingMode;
-import rs117.hd.config.MinimapStyle;
 import rs117.hd.config.ColorFilter;
+import rs117.hd.config.MinimapStyle;
 import rs117.hd.config.SeasonalTheme;
 import rs117.hd.config.ShadingMode;
 import rs117.hd.config.ShadowMode;
@@ -971,7 +971,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		uniMinimapImage = glGetUniformLocation(glUiProgram, "minimapImage");
 		uniMinimapLocation = glGetUniformLocation(glUiProgram, "minimapLocation");
 		uniMinimapPlayerLocation = glGetUniformLocation(glUiProgram, "minimapPlayerLocation");
-		uniMinimapEnabled = glGetUniformLocation(glUiProgram, "enabledMinimap");
+		uniMinimapEnabled = glGetUniformLocation(glUiProgram, "minimapEnabled");
 
 		uniBlockMaterials = glGetUniformBlockIndex(glSceneProgram, "MaterialUniforms");
 		uniBlockWaterTypes = glGetUniformBlockIndex(glSceneProgram, "WaterTypeUniforms");
@@ -2335,12 +2335,10 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		glUniform1f(uniUiColorBlindnessIntensity, config.colorBlindnessIntensity() / 100f);
 		glUniform4fv(uniUiAlphaOverlay, ColorUtils.srgba(overlayColor));
 
-		glUniform1f(uniMinimapEnabled, config.openGLMinimap() ? 1: 0);
+		glUniform1i(uniMinimapEnabled, config.openGLMinimap() ? 1 : 0);
 
-		glUniform2i(uniMinimapLocation, getMinimapLocation().getX(), getMinimapLocation().getY());
-		Point minimapPos = minimapRenderer.getPlayerMinimapLocation();
-
-		glUniform2i(uniMinimapPlayerLocation, minimapPos.getX(), minimapPos.getY());
+		glUniform2iv(uniMinimapLocation, getMinimapLocation());
+		glUniform2iv(uniMinimapPlayerLocation, minimapRenderer.getPlayerMinimapLocation());
 
 		if (client.isStretchedEnabled()) {
 			Dimension dim = client.getStretchedDimensions();
@@ -2373,7 +2371,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		glDisable(GL_BLEND);
 	}
 
-	public Point getMinimapLocation() {
+	public int[] getMinimapLocation() {
 		Widget minimapDrawWidget;
 		if (client.isResized()) {
 			if (client.getVarbitValue(Varbits.SIDE_PANELS) == 1) {
@@ -2385,9 +2383,11 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 			minimapDrawWidget = client.getWidget(ComponentID.FIXED_VIEWPORT_MINIMAP_DRAW_AREA);
 		}
 
-		return minimapDrawWidget == null ? new Point(0,0) : minimapDrawWidget.getCanvasLocation();
+		if (minimapDrawWidget == null)
+			return new int[2];
+		var p = minimapDrawWidget.getCanvasLocation();
+		return new int[] { p.getX(), p.getY() };
 	}
-
 
 	/**
 	 * Convert the front framebuffer to an Image

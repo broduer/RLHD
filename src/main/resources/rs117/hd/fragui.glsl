@@ -40,7 +40,7 @@ uniform ivec2 sourceDimensions;
 uniform ivec2 targetDimensions;
 uniform float colorBlindnessIntensity;
 uniform vec4 alphaOverlay;
-uniform float minimapEnabled;
+uniform bool minimapEnabled;
 uniform ivec2 minimapLocation;
 uniform ivec2 minimapPlayerLocation;
 
@@ -82,7 +82,7 @@ vec4 alphaBlend(vec4 src, vec4 dst) {
 }
 
 // Function to get minimap location in screen space
-ivec2 getMinimapLocation() {
+ivec2 getMinimapScreenOffset() {
     return ivec2(minimapLocation.x, sourceDimensions.y - minimapLocation.y - 152);
 }
 
@@ -108,7 +108,7 @@ void main() {
     c = replaceTransparency(c);
     #endif
 
-    if(minimapEnabled == 0) {
+    if (minimapEnabled) {
         c = applyMinimapOverlay(c);
     }
 
@@ -119,19 +119,22 @@ void main() {
 }
 
 vec4 applyMinimapOverlay(vec4 originalColor) {
-    ivec2 minimapArea = textureSize(minimapImage, 0);
+    ivec2 minimapTexSize = textureSize(minimapImage, 0);
 
     int minimapCircleDiameter = 152;
 
-    ivec2 minimapTopRight = getMinimapLocation();
+    ivec2 minimapTopRight = getMinimapScreenOffset();
 
-    ivec2 screenPos = ivec2(floor(gl_FragCoord.xy + 0.5));
+    ivec2 screenPos = ivec2(gl_FragCoord.xy);
+
+//    originalColor *= vec4(1, 0, 0, 1);
 
     // Check if the current fragment is within the circular minimap area at the top right of the screen
-    if (distance(vec2(screenPos), vec2(minimapTopRight) + vec2(minimapCircleDiameter) / 2.0) <= minimapCircleDiameter / 2.0) {
-        ivec2 relativeScreenPos = screenPos - (minimapTopRight + ivec2(minimapCircleDiameter) / 2);
-        vec2 minimapTexCoords = (vec2(minimapPlayerLocation.x + 1, minimapPlayerLocation.y + 1) + vec2(relativeScreenPos)) / vec2(minimapArea);
-        minimapTexCoords = minimapTexCoords + (0.5 / vec2(minimapArea));
+    if (distance(vec2(screenPos), vec2(minimapTopRight) + minimapCircleDiameter / 2) <= minimapCircleDiameter / 2) {
+        ivec2 relativeScreenPos = screenPos - (minimapTopRight + minimapCircleDiameter / 2);
+
+        vec2 playerLoc = ((minimapPlayerLocation) / 16) * 16;
+        vec2 minimapTexCoords = (floor((playerLoc / 32 + relativeScreenPos)) + .5) / vec2(minimapTexSize);
         vec4 minimapColor = texture(minimapImage, minimapTexCoords);
 
         // Applying mask inversion

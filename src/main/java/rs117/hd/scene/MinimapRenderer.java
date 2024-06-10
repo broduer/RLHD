@@ -1,34 +1,26 @@
 package rs117.hd.scene;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.*;
-import net.runelite.api.coords.*;
 import net.runelite.client.callback.ClientThread;
-import net.runelite.client.ui.overlay.Overlay;
 import rs117.hd.HdPlugin;
 import rs117.hd.HdPluginConfig;
 import rs117.hd.config.MinimapStyle;
 import rs117.hd.data.WaterType;
 import rs117.hd.data.materials.GroundMaterial;
 import rs117.hd.data.materials.Material;
-import rs117.hd.data.materials.UvType;
 import rs117.hd.model.ModelPusher;
 import rs117.hd.overlays.FrameTimer;
 import rs117.hd.overlays.Timer;
-import rs117.hd.scene.model_overrides.ModelOverride;
 import rs117.hd.scene.tile_overrides.TileOverride;
 import rs117.hd.utils.ColorUtils;
 
 import static net.runelite.api.Constants.*;
 import static net.runelite.api.Perspective.*;
 import static rs117.hd.scene.SceneUploader.SCENE_OFFSET;
-import static rs117.hd.scene.SceneUploader.UP_NORMAL;
-import static rs117.hd.scene.SceneUploader.packTerrainData;
 import static rs117.hd.scene.tile_overrides.TileOverride.NONE;
 import static rs117.hd.scene.tile_overrides.TileOverride.OVERLAY_FLAG;
 import static rs117.hd.utils.HDUtils.clamp;
@@ -191,19 +183,14 @@ public class MinimapRenderer {
 	}
 
 
+	public int[] getPlayerMinimapLocation() {
+		if (client.getLocalPlayer() == null)
+			return new int[2];
 
-	public Point getPlayerMinimapLocation() {
-		if (client.getLocalPlayer() == null) {
-			return new Point(0, 0);
-		}
-		LocalPoint playerLoc = client.getLocalPlayer().getLocalLocation();
-		int expandedChunks = client.isResized() ? client.getExpandedMapLoading() : 0;
-		int tileX = playerLoc.getSceneX() + expandedChunks * 8;
-		int tileY = playerLoc.getSceneY() + expandedChunks * 8;
-		int x = tileX * TILE_SIZE;
-		int y = tileY * TILE_SIZE;
-
-		return new Point(x, y);
+		var lp = client.getLocalPlayer().getLocalLocation();
+		int expandedChunks = plugin.getSceneContext() == null ? 0 : plugin.getSceneContext().expandedMapLoadingChunks;
+		int padding = expandedChunks * CHUNK_SIZE * LOCAL_TILE_SIZE;
+		return new int[] { lp.getX() + padding, lp.getY() + padding };
 	}
 
 	public void prepareScene(SceneContext sceneContext) {
