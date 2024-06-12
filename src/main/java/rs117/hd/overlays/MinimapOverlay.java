@@ -35,8 +35,8 @@ public class MinimapOverlay extends net.runelite.client.ui.overlay.Overlay {
 	public Dimension render(Graphics2D graphics) {
 		BufferedImage image = new BufferedImage(20,20,1);
 
-		if (minimapRenderer.miniMapImage != null)
-			image = minimapRenderer.miniMapImageCircle;
+		if (minimapRenderer.miniMapImageFull != null)
+			image = minimapRenderer.miniMapImage;
 
 		graphics.drawImage(image, 0, 0, null);
 

@@ -58,15 +58,15 @@ public class MinimapRenderer {
 	 * Saved image of the scene, no reason to draw the whole thing every
 	 * frame.
 	 */
-	public volatile BufferedImage miniMapImage;
+	public volatile BufferedImage miniMapImageFull;
 
 	/**
 	 * Saved image of the scene, no reason to draw the whole thing every
 	 * frame.
 	 */
-	public volatile BufferedImage miniMapImageCircle;
+	public volatile BufferedImage miniMapImage;
 
-	public Boolean mapCaptured = false;
+	public Boolean createdMinimapSnapshot = false;
 
 
 	/**
@@ -119,36 +119,40 @@ public class MinimapRenderer {
 		}
 	}
 
+	public void reset() {
+		client.setMinimapTileDrawer(null);
+		createdMinimapSnapshot = false;
+		miniMapImage = null;
+		miniMapImageFull = null;
+	}
+
 	public void generateMinimapImage() {
-		mapCaptured = false;
+		createdMinimapSnapshot = false;
 		captureMinimap();
 	}
 
 	public void captureMinimap() {
-		if (mapCaptured) return;
-		SpritePixels map = client.drawInstanceMap(client.getPlane());
-		// larger instance map doesn't fit on fixed mode, so reduce to 104x104
-		BufferedImage image = minimapToBufferedImage(map, client.isResized() ? client.getExpandedMapLoading() : 0);
-		synchronized (this)
-		{
-			miniMapImage = image;
-			createSmallMap();
-			plugin.uploadMinimapImage();
-			mapCaptured = true;
+		if (createdMinimapSnapshot) return;
+
+		try {
+			SpritePixels map = client.drawInstanceMap(client.getTopLevelWorldView().getPlane());
+
+			BufferedImage image = minimapToBufferedImage(map, client.isResized() ? client.getExpandedMapLoading() : 0);
+
+			synchronized (this) {
+				miniMapImageFull = image;
+				miniMapImage = extractRenderedMinimap(miniMapImageFull);
+				plugin.uploadMinimapImage();
+				createdMinimapSnapshot = true;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
-	private void createSmallMap() {
-		miniMapImageCircle = extractSquarePixels(miniMapImage);
-	}
-
-	private static BufferedImage extractSquarePixels(BufferedImage originalImage) {
-
-		//Creates a smaller image as the big one is not needed
-
+	private static BufferedImage extractRenderedMinimap(BufferedImage originalImage) {
 		int squareSize = 416;
 
-		// Use the square as a mask to extract pixels from the original image
 		BufferedImage resultImage = new BufferedImage(squareSize, squareSize, BufferedImage.TYPE_INT_ARGB);
 		for (int i = 0; i < squareSize; i++) {
 			for (int j = 0; j < squareSize; j++) {
@@ -159,16 +163,16 @@ public class MinimapRenderer {
 		return resultImage;
 	}
 
-	private static BufferedImage minimapToBufferedImage(SpritePixels spritePixels, int expandedChunks)
-	{
+	private static BufferedImage minimapToBufferedImage(SpritePixels spritePixels, int expandedChunks) {
 		int width = spritePixels.getWidth();
 		int height = spritePixels.getHeight();
 		int[] pixels = spritePixels.getPixels();
+
 		BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 		img.setRGB(0, 0, width, height, pixels, 0, width);
+
 		int maxChunks = ((Constants.EXTENDED_SCENE_SIZE - Constants.SCENE_SIZE) / 2) / 8;
-		if (expandedChunks < maxChunks)
-		{
+		if (expandedChunks < maxChunks) {
 			int cropChunks = maxChunks - expandedChunks;
 			img = img.getSubimage(
 				TILE_SIZE * (cropChunks * 8),
@@ -177,7 +181,6 @@ public class MinimapRenderer {
 				(Constants.SCENE_SIZE + expandedChunks * 8) * TILE_SIZE
 			);
 		}
-
 
 		return img;
 	}
@@ -737,10 +740,10 @@ public class MinimapRenderer {
 	}
 
 	public void drawTile(Tile tile, int tx, int ty, int px0, int py0, int px1, int py1) {
-
+		if (plugin.config.minimapType() == MinimapStyle.RUNELITE) return;
 		frameTimer.begin(Timer.MINIMAP_DRAW);
 
-		if (!mapCaptured || !plugin.config.openGLMinimap()) {
+		if (!createdMinimapSnapshot) {
 			if (configUseShadedMinimap) {
 				drawMinimapShaded(tile, tx, ty, px0, py0, px1, py1);
 			} else {

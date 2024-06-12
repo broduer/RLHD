@@ -38,6 +38,13 @@ vec3 XYZtoRGB(vec3 XYZ) {
     return XYZ_TO_RGB_MATRIX * XYZ;
 }
 
+vec4 alphaBlend(vec4 src, vec4 dst) {
+    return vec4(
+        src.rgb + dst.rgb * (1.0f - src.a),
+        src.a + dst.a * (1.0f - src.a)
+    );
+}
+
 /**
  * Transform from linear RGB to CIE 1931 XYZ color space.
  * @param RGB linear RGB color coordinates

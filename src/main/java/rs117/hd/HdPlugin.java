@@ -429,8 +429,6 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 	private int uniLightProjectionMatrix;
 	private int uniShadowMap;
 
-
-	private int uniMinimapEnabled;
 	private int uniMinimapMask;
 	private int uniMinimapImage;
 	private int uniMinimapLocation;
@@ -470,6 +468,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 	public MinimapStyle configMinimapStyle;
 	public VanillaShadowMode configVanillaShadowMode;
 	public ColorFilter configColorFilter = ColorFilter.NONE;
+
 	public ColorFilter configColorFilterPrevious;
 
 	public boolean useLowMemoryMode;
@@ -839,6 +838,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 			.define("UI_SCALING_MODE", config.uiScalingMode().getMode())
 			.define("COLOR_BLINDNESS", config.colorBlindness())
 			.define("APPLY_COLOR_FILTER", configColorFilter != ColorFilter.NONE)
+			.define("OPENGL_MINIMAP", configMinimapStyle != MinimapStyle.RUNELITE)
 			.define("MATERIAL_CONSTANTS", () -> {
 				StringBuilder include = new StringBuilder();
 				for (Material m : Material.values())
@@ -919,8 +919,10 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 
 		glUseProgram(glUiProgram);
 		glUniform1i(uniUiTexture, TEXTURE_UNIT_UI - TEXTURE_UNIT_BASE);
-		glUniform1i(uniMinimapMask, TEXTURE_UNIT_MINIMAP_MASK - TEXTURE_UNIT_BASE);
-		glUniform1i(uniMinimapImage, TEXTURE_UNIT_MINIMAP_IMAGE - TEXTURE_UNIT_BASE);
+		if (configMinimapStyle != MinimapStyle.RUNELITE) {
+			glUniform1i(uniMinimapMask, TEXTURE_UNIT_MINIMAP_MASK - TEXTURE_UNIT_BASE);
+			glUniform1i(uniMinimapImage, TEXTURE_UNIT_MINIMAP_IMAGE - TEXTURE_UNIT_BASE);
+		}
 
 		glUseProgram(0);
 	}
@@ -973,13 +975,15 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		uniTexSourceDimensions = glGetUniformLocation(glUiProgram, "sourceDimensions");
 		uniUiColorBlindnessIntensity = glGetUniformLocation(glUiProgram, "colorBlindnessIntensity");
 		uniUiAlphaOverlay = glGetUniformLocation(glUiProgram, "alphaOverlay");
-		uniMinimapMask = glGetUniformLocation(glUiProgram, "minimapMask");
-		uniMinimapImage = glGetUniformLocation(glUiProgram, "minimapImage");
-		uniMinimapLocation = glGetUniformLocation(glUiProgram, "minimapLocation");
-		uniMinimapPlayerLocation = glGetUniformLocation(glUiProgram, "minimapPlayerLocation");
-		uniResized = glGetUniformLocation(glUiProgram, "isResized");
-		uniMapAngle = glGetUniformLocation(glUiProgram, "mapAngle");
-		uniMinimapEnabled = glGetUniformLocation(glUiProgram, "minimapEnabled");
+		if (configMinimapStyle != MinimapStyle.RUNELITE) {
+			System.out.println("OPENGL MINIMAP");
+			uniMinimapMask = glGetUniformLocation(glUiProgram, "minimapMask");
+			uniMinimapImage = glGetUniformLocation(glUiProgram, "minimapImage");
+			uniMinimapLocation = glGetUniformLocation(glUiProgram, "minimapLocation");
+			uniMinimapPlayerLocation = glGetUniformLocation(glUiProgram, "minimapPlayerLocation");
+			uniResized = glGetUniformLocation(glUiProgram, "isResized");
+			uniMapAngle = glGetUniformLocation(glUiProgram, "mapAngle");
+		}
 
 		uniBlockMaterials = glGetUniformBlockIndex(glSceneProgram, "MaterialUniforms");
 		uniBlockWaterTypes = glGetUniformBlockIndex(glSceneProgram, "WaterTypeUniforms");
@@ -1490,7 +1494,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		glActiveTexture(TEXTURE_UNIT_MINIMAP_IMAGE);
 		glBindTexture(GL_TEXTURE_2D, texMinimapImage);
 
-		BufferedImage image = minimapRenderer.miniMapImageCircle ;
+		BufferedImage image = minimapRenderer.miniMapImage;
 		int width = 416;
 		int height = 416;
 
@@ -2343,12 +2347,12 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		glUniform1f(uniUiColorBlindnessIntensity, config.colorBlindnessIntensity() / 100f);
 		glUniform4fv(uniUiAlphaOverlay, ColorUtils.srgba(overlayColor));
 
-		glUniform1i(uniMinimapEnabled, config.openGLMinimap() ? 1 : 0);
-
-		glUniform2iv(uniMinimapLocation, getMinimapLocation());
-		glUniform2iv(uniMinimapPlayerLocation, minimapRenderer.getPlayerMinimapLocation());
-		glUniform1i(uniResized, client.isResized() ? 1 : 0);
-		glUniform1f(uniMapAngle, (float) client.getCameraYaw());
+		if (configMinimapStyle != MinimapStyle.RUNELITE) {
+			glUniform2iv(uniMinimapLocation, getMinimapLocation());
+			glUniform2iv(uniMinimapPlayerLocation, minimapRenderer.getPlayerMinimapLocation());
+			glUniform1i(uniResized, client.isResized() ? 1 : 0);
+			glUniform1f(uniMapAngle, (float) client.getCameraYaw());
+		}
 
 		if (client.isStretchedEnabled()) {
 			Dimension dim = client.getStretchedDimensions();
@@ -2722,12 +2726,16 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 							case KEY_UI_SCALING_MODE:
 							case KEY_VANILLA_COLOR_BANDING:
 							case KEY_COLOR_FILTER:
-								recompilePrograms = true;
-								break;
 							case KEY_MINIMAP_STYLE:
 								configMinimapStyle = config.minimapType();
-								minimapRenderer.updateConfigs();
-								minimapRenderer.generateMinimapImage();
+								if (configMinimapStyle == MinimapStyle.RUNELITE) {
+									minimapRenderer.reset();
+								} else {
+									minimapRenderer.updateConfigs();
+									minimapRenderer.generateMinimapImage();
+									client.setMinimapTileDrawer(minimapRenderer::drawTile);
+								}
+								recompilePrograms = true;
 								break;
 							case KEY_SHADOW_MODE:
 							case KEY_SHADOW_TRANSPARENCY:
@@ -3339,9 +3347,6 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 				reuploadScene();
 			--gameTicksUntilSceneReload;
 		}
-
-		//System.out.println(client.getMinimapZoom());
-		System.out.println(client.getMapAngle());
 
 		fishingSpotReplacer.update();
 
