@@ -28,6 +28,46 @@ import static rs117.hd.utils.HDUtils.clamp;
 @Singleton
 public class MinimapRenderer {
 
+	private static final float[][] zoomPairs = {
+		{2.0f, 0.51f},
+		{2.25f, 0.58f},
+		{2.5f, 0.64f},
+		{2.75f, 0.7f},
+		{3.0f, 0.77f},
+		{3.25f, 0.83f},
+		{3.5f, 0.9f},
+		{3.75f, 0.95f},
+		{4.0f, 1.0f},
+		{4.25f, 1.05f},
+		{4.5f, 1.13f},
+		{4.75f, 1.2f},
+		{5.0f, 1.25f},
+		{5.25f, 1.32f},
+		{5.5f, 1.4f},
+		{5.75f, 1.45f},
+		{6.0f, 1.5f},
+		{6.25f, 1.54f},
+		{6.5f, 1.64f},
+		{6.75f, 1.67f},
+		{7.0f, 1.73f},
+		{7.25f, 1.84f},
+		{7.5f, 1.87f},
+		{7.75f, 1.97f},
+		{8.0f, 2.0f}
+	};
+
+	public float interpolate(double zoom) {
+		float zoomFloat = (float) zoom;
+		for (int i = 0; i < zoomPairs.length - 1; i++) {
+			if (zoomFloat >= zoomPairs[i][0] && zoomFloat <= zoomPairs[i + 1][0]) {
+				float t = (zoomFloat - zoomPairs[i][0]) / (zoomPairs[i + 1][0] - zoomPairs[i][0]);
+				return zoomPairs[i][1] + t * (zoomPairs[i + 1][1] - zoomPairs[i][1]);
+			}
+		}
+		return -1; // Invalid zoom level
+	}
+
+
 	public static SceneTileModel[] tileModels = new SceneTileModel[52];
 
 	static {

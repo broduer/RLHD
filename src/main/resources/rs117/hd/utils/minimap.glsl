@@ -6,6 +6,7 @@
 uniform sampler2D minimapMask;
 uniform sampler2D minimapImage;
 uniform bool isResized;
+uniform float uniMinimiapZoomFactor;
 uniform ivec2 minimapLocation;
 uniform ivec2 minimapPlayerLocation;
 uniform float mapAngle;
@@ -24,10 +25,13 @@ vec4 applyMinimapOverlay(vec4 originalColor);
 
 
 vec4 applyMinimapOverlay(vec4 originalColor) {
+    // Obtain the size of the minimap texture
     ivec2 minimapTexSize = textureSize(minimapImage, 0);
 
+    // Diameter of the minimap circle
     int minimapCircleDiameter = 152;
 
+    // Top-right corner of the minimap on the screen
     ivec2 minimapTopRight = getMinimapScreenOffset();
     ivec2 screenPos = ivec2(gl_FragCoord.xy);
 
@@ -50,23 +54,34 @@ vec4 applyMinimapOverlay(vec4 originalColor) {
         );
 
         // Zoom factor
-        float zoomFactor = 1.0;
+        float zoomFactor = uniMinimiapZoomFactor; // Assuming no zoom
         rotatedPos /= zoomFactor;
 
         // Calculate the player's location in the minimap texture coordinates
         vec2 playerLoc = minimapPlayerLocation / 16.0 * 16.0;
         vec2 minimapTexCoords = (floor((playerLoc / 32.0 + rotatedPos)) + 0.5) / vec2(minimapTexSize);
 
+        // Sample the minimap color at the computed texture coordinates
         vec4 minimapColor = texture(minimapImage, minimapTexCoords);
 
         // Change color to red if within tolerance of #EEECF1
         vec3 targetColor = vec3(0.933, 0.925, 0.945); // RGB of #EEECF1 in normalized form
         float tolerance = 0.1;
         if (distance(minimapColor.rgb, targetColor) < tolerance) {
-            minimapColor.rgb = vec3(1.0, 0.0, 0.0); // Set to red
+            vec4 averageColor = vec4(0.0);
+            int count = 0;
+            for (int x = -40; x <= 40; ++x) {
+                for (int y = -40; y <= 40; ++y) {
+                    vec2 offset = vec2(x, y) / vec2(minimapTexSize);
+                    vec4 neighborColor = texture(minimapImage, minimapTexCoords + offset);
+                    averageColor += neighborColor;
+                    count++;
+                }
+            }
+            minimapColor = averageColor / float(count); // Average surrounding colors
         }
 
-        // Applying mask inversion
+        // Apply mask inversion
         ivec2 textureCoordInt = screenPos - minimapTopRight;
         textureCoordInt = ivec2(clamp(textureCoordInt.x, 0, textureSize(minimapMask, 0).x - 1), clamp(textureCoordInt.y, 0, textureSize(minimapMask, 0).y - 1));
         vec4 minimapMaskColor = texelFetch(minimapMask, textureCoordInt, 0);
