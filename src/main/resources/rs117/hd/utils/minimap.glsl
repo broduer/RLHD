@@ -24,6 +24,31 @@ ivec2 getMinimapScreenOffset() {
 vec4 applyMinimapOverlay(vec4 originalColor);
 
 
+// Function to modify the minimap image
+vec4 modifyMinimapImage(ivec2 texCoords, ivec2 minimapTexSize, sampler2D minimapImage) {
+    vec4 color = texelFetch(minimapImage, texCoords, 0);
+
+    // Change color to red if within tolerance of #EEECF1 or #ED0000
+    vec3 targetColor1 = vec3(0.933, 0.925, 0.945); // RGB of #EEECF1 in normalized form
+    vec3 targetColor2 = vec3(0.929, 0.0, 0.0);    // RGB of #ED0000 in normalized form
+    float tolerance = 0.1;
+    if (distance(color.rgb, targetColor1) < tolerance || distance(color.rgb, targetColor2) < tolerance) {
+        vec4 averageColor = vec4(0.0);
+        int count = 0;
+        for (int x = -5; x <= 5; ++x) {
+            for (int y = -5; y <= 5; ++y) {
+                vec2 offset = vec2(x, y) / vec2(minimapTexSize);
+                vec4 neighborColor = texture(minimapImage, texCoords + ivec2(offset));
+                averageColor += neighborColor;
+                count++;
+            }
+        }
+        color = averageColor / float(count); // Average surrounding colors
+    }
+
+    return color;
+}
+
 vec4 applyMinimapOverlay(vec4 originalColor) {
     // Obtain the size of the minimap texture
     ivec2 minimapTexSize = textureSize(minimapImage, 0);
@@ -61,25 +86,9 @@ vec4 applyMinimapOverlay(vec4 originalColor) {
         vec2 playerLoc = minimapPlayerLocation / 16.0 * 16.0;
         vec2 minimapTexCoords = (floor((playerLoc / 32.0 + rotatedPos)) + 0.5) / vec2(minimapTexSize);
 
-        // Sample the minimap color at the computed texture coordinates
-        vec4 minimapColor = texture(minimapImage, minimapTexCoords);
-
-        // Change color to red if within tolerance of #EEECF1
-        vec3 targetColor = vec3(0.933, 0.925, 0.945); // RGB of #EEECF1 in normalized form
-        float tolerance = 0.1;
-        if (distance(minimapColor.rgb, targetColor) < tolerance) {
-            vec4 averageColor = vec4(0.0);
-            int count = 0;
-            for (int x = -40; x <= 40; ++x) {
-                for (int y = -40; y <= 40; ++y) {
-                    vec2 offset = vec2(x, y) / vec2(minimapTexSize);
-                    vec4 neighborColor = texture(minimapImage, minimapTexCoords + offset);
-                    averageColor += neighborColor;
-                    count++;
-                }
-            }
-            minimapColor = averageColor / float(count); // Average surrounding colors
-        }
+        // Modify the minimap color before any processing
+        ivec2 minimapTexCoordsInt = ivec2(minimapTexCoords * vec2(minimapTexSize));
+        vec4 minimapColor = modifyMinimapImage(minimapTexCoordsInt, minimapTexSize, minimapImage);
 
         // Apply mask inversion
         ivec2 textureCoordInt = screenPos - minimapTopRight;
