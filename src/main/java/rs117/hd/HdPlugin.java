@@ -641,7 +641,12 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 				checkGLErrors();
 
 				client.setDrawCallbacks(this);
-				client.setGpuFlags(DrawCallbacks.GPU | DrawCallbacks.HILLSKEW | DrawCallbacks.NORMALS);
+				client.setGpuFlags(
+					DrawCallbacks.GPU |
+					DrawCallbacks.HILLSKEW |
+					DrawCallbacks.NORMALS |
+					(config.removeVertexSnapping() ? DrawCallbacks.NO_VERTEX_SNAPPING : 0)
+				);
 				client.setExpandedMapLoading(getExpandedMapLoadingChunks());
 				// force rebuild of main buffer provider to enable alpha channel
 				client.resizeCanvas();
@@ -2489,6 +2494,10 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		loadSceneInternal(scene);
 	}
 
+	public boolean isLoadingScene() {
+		return nextSceneContext != null;
+	}
+
 	private synchronized void loadSceneInternal(Scene scene) {
 		if (nextSceneContext != null)
 			nextSceneContext.destroy();
@@ -2786,6 +2795,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 								resizeModelCache = true;
 								break;
 							case KEY_LOW_MEMORY_MODE:
+							case KEY_REMOVE_VERTEX_SNAPPING:
 								restartPlugin();
 								// since we'll be restarting the plugin anyway, skip pending changes
 								return;
