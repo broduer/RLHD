@@ -90,6 +90,11 @@ vec4 applyMinimapOverlay(vec4 originalColor) {
         ivec2 minimapTexCoordsInt = ivec2(minimapTexCoords * vec2(minimapTexSize));
         vec4 minimapColor = modifyMinimapImage(minimapTexCoordsInt, minimapTexSize, minimapImage);
 
+        // Check if minimapColor is empty and set to black if it is
+        if (minimapColor.a == 0.0 && minimapColor.rgb == vec3(0.0)) {
+            minimapColor = vec4(0.0, 0.0, 0.0, 1.0);
+        }
+
         // Apply mask inversion
         ivec2 textureCoordInt = screenPos - minimapTopRight;
         textureCoordInt = ivec2(clamp(textureCoordInt.x, 0, textureSize(minimapMask, 0).x - 1), clamp(textureCoordInt.y, 0, textureSize(minimapMask, 0).y - 1));

@@ -2361,11 +2361,6 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 			glUniform1i(uniResized, client.isResized() ? 1 : 0);
 			glUniform1f(uniMinimiapZoomFactor, minimapRenderer.interpolate(client.getMinimapZoom()));
 
-			if (lastCheckedMapAngle != client.getCameraYaw()) {
-				//minimapRenderer.generateMinimapImage();
-				//System.out.println("UPDATE");
-				lastCheckedMapAngle = client.getCameraYaw();
-			}
 			glUniform1f(uniMapAngle, (float) client.getCameraYaw());
 		}
 
