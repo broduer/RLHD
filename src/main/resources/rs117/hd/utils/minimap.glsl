@@ -78,9 +78,9 @@ vec4 applyMinimapOverlay(vec4 originalColor) {
             relativeScreenPos.x * sinAngle + relativeScreenPos.y * cosAngle
         );
 
-        // Zoom factor
-        float zoomFactor = uniMinimiapZoomFactor; // Assuming no zoom
-        rotatedPos /= zoomFactor;
+        rotatedPos /= uniMinimiapZoomFactor;
+
+        rotatedPos += vec2(0.0, 0.4);
 
         // Calculate the player's location in the minimap texture coordinates
         vec2 playerLoc = minimapPlayerLocation / 16.0 * 16.0;
