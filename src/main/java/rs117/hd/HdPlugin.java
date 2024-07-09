@@ -2619,6 +2619,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 
 			isInChambersOfXeric = sceneContext.intersects(Area.CHAMBERS_OF_XERIC);
 		}
+		minimapRenderer.generateMinimapImage();
 	}
 
 	public void reloadSceneNextGameTick()
