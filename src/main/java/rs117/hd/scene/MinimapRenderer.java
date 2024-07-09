@@ -671,6 +671,11 @@ public class MinimapRenderer {
 		}
 	}
 
+	private static int blend(int baseHsl, int brightnessFactorHsl) {
+		int lightness = (baseHsl & 0x7F) * (brightnessFactorHsl & 0x7F) >> 7;
+		return (baseHsl & ~0x7F) | clamp(lightness, 0, 0x7F);
+	}
+
 	private void drawMinimapShaded(Tile tile, int tx, int ty, int px0, int py0, int px1, int py1) {
 		var sceneContext = plugin.getSceneContext();
 		if (sceneContext == null)
@@ -695,17 +700,26 @@ public class MinimapRenderer {
 			int nwTexture = colors[6];
 			int neTexture = colors[7];
 
-			boolean hasTexture = nwTexture != 0;
-			fillGradient(
-				px0,
-				py0,
-				px1,
-				py1,
-				hasTexture ? nwTexture : nwColor,
-				hasTexture ? neTexture : neColor,
-				hasTexture ? swTexture : swColor,
-				hasTexture ? seTexture : seColor
-			);
+			int tex = paint.getTexture();
+			if (tex == -1) {
+				if (paint.getNwColor() != 12345678) {
+					fillGradient(px0, py0, px1, py1, nwColor, neColor, swColor, seColor);
+				} else {
+					client.getRasterizer().fillRectangle(px0, py0, px1 - px0, py1 - py0, paint.getRBG());
+				}
+			} else {
+				boolean hasTexture = nwTexture != 0;
+				fillGradient(
+					px0,
+					py0,
+					px1,
+					py1,
+					hasTexture ? nwTexture : nwColor,
+					hasTexture ? neTexture : neColor,
+					hasTexture ? swTexture : swColor,
+					hasTexture ? seTexture : seColor
+				);
+			}
 		}
 
 		var model = tile.getSceneTileModel();
