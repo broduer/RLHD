@@ -30,6 +30,12 @@
           "type": "integer"
         }
       },
+      "horizonTile": {
+        "description": "Definition of a horizon tile that fills in the scene edges.",
+        "items": {
+          "$ref": "horizon_tile.schema.json"
+        }
+      },
       "regionBoxes": {
         "type": "array",
         "description": "A list of region boxes to include in the area. Each box is an array of the bottom left & top right region IDs.",

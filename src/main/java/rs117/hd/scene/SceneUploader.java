@@ -40,6 +40,7 @@ import rs117.hd.data.materials.UvType;
 import rs117.hd.model.ModelPusher;
 import rs117.hd.scene.areas.AABB;
 import rs117.hd.scene.areas.Area;
+import rs117.hd.scene.areas.HorizonTile;
 import rs117.hd.scene.model_overrides.ModelOverride;
 import rs117.hd.scene.model_overrides.ObjectType;
 import rs117.hd.scene.tile_overrides.TileOverride;
@@ -136,7 +137,11 @@ public class SceneUploader {
 
 					if (hideUnrelatedAreas && !sceneContext.area.containsPoint(baseExX + x, baseExY + y, z)) {
 						sceneContext.scene.removeTile(tile);
-						continue;
+						if (sceneContext.area.horizonTile != null) {
+							addHorizonTile(sceneContext,z,x,y,tile);
+						} else {
+							continue;
+						}
 					}
 
 					upload(sceneContext, tile, x, y);
@@ -256,6 +261,85 @@ public class SceneUploader {
 				}
 			}
 		}
+	}
+
+	public void addHorizonTile(SceneContext sceneContext, int tileZ,int tileExX, int tileExY, Tile tile) {
+		int baseExX = sceneContext.scene.getBaseX() - SCENE_OFFSET;
+		int baseExY = sceneContext.scene.getBaseY() - SCENE_OFFSET;
+		boolean hideUnrelatedAreas = config.hideUnrelatedAreas() && sceneContext.area != null && !sceneContext.scene.isInstance();
+
+		Tile[][][] extendedTiles = sceneContext.scene.getExtendedTiles();
+		int[][][] tileHeights = sceneContext.scene.getTileHeights();
+
+		int totalSwHeight = 0;
+		int totalSeHeight = 0;
+		int totalNeHeight = 0;
+		int totalNwHeight = 0;
+		int count = 0;
+
+		int avgSwHeight = 0;
+		int avgSeHeight = 0;
+		int avgNeHeight = 0;
+		int avgNwHeight = 0;
+
+		if (tile != null) {
+			boolean outsideScene = hideUnrelatedAreas && !sceneContext.area.containsPoint(baseExX + tileExX, baseExY + tileExY, tileZ);
+			if (outsideScene) {
+				int swHeight = tileHeights[tileZ][tileExX][tileExY];
+				int seHeight = tileHeights[tileZ][tileExX + 1][tileExY];
+				int neHeight = tileHeights[tileZ][tileExX + 1][tileExY + 1];
+				int nwHeight = tileHeights[tileZ][tileExX][tileExY + 1];
+
+				totalSwHeight += swHeight;
+				totalSeHeight += seHeight;
+				totalNeHeight += neHeight;
+				totalNwHeight += nwHeight;
+				count++;
+			}
+		}
+
+		if (count > 0) {
+			avgSwHeight = totalSwHeight / count;
+			avgSeHeight = totalSeHeight / count;
+			avgNeHeight = totalNeHeight / count;
+			avgNwHeight = totalNwHeight / count;
+
+			System.out.println("Average SW Height: " + avgSwHeight);
+			System.out.println("Average SE Height: " + avgSeHeight);
+			System.out.println("Average NE Height: " + avgNeHeight);
+			System.out.println("Average NW Height: " + avgNwHeight);
+
+
+
+		}
+
+		int tileX = tileExX - SCENE_OFFSET;
+		int tileY = tileExY - SCENE_OFFSET;
+		int renderLevel = tileZ;
+
+		boolean outsideScene = hideUnrelatedAreas && !sceneContext.area.containsPoint(baseExX + tileExX, baseExY + tileExY, tileZ);
+		if (outsideScene) {
+			int vertexOffset = sceneContext.getVertexOffset();
+			int uvOffset = sceneContext.getUvOffset();
+			int vertexCount;
+
+			uploadHorizonTile(sceneContext, tileExX, tileExY, renderLevel,avgSwHeight,avgSeHeight,avgNeHeight,avgNwHeight);
+			vertexCount = 6;
+
+			sceneContext.staticUnorderedModelBuffer
+				.ensureCapacity(8)
+				.getBuffer()
+				.put(vertexOffset)
+				.put(uvOffset)
+				.put(vertexCount / 3)
+				.put(sceneContext.staticVertexCount)
+				.put(0)
+				.put(tileX * LOCAL_TILE_SIZE)
+				.put(0)
+				.put(tileY * LOCAL_TILE_SIZE);
+			sceneContext.staticVertexCount += vertexCount;
+		}
+
 	}
 
 	private void uploadModel(SceneContext sceneContext, Tile tile, int uuid, Model model, int orientation, ObjectType objectType) {
@@ -1192,6 +1276,58 @@ public class SceneUploader {
 		sceneContext.stagingBufferVertices.put(fromX, nwHeight, toY, color);
 
 		int packedMaterialData = modelPusher.packMaterialData(Material.BLACK, -1, ModelOverride.NONE, UvType.GEOMETRY, false);
+
+		sceneContext.stagingBufferUvs.ensureCapacity(24);
+		sceneContext.stagingBufferUvs.put(0, 0, 0, packedMaterialData);
+		sceneContext.stagingBufferUvs.put(1, 0, 0, packedMaterialData);
+		sceneContext.stagingBufferUvs.put(0, 1, 0, packedMaterialData);
+
+		sceneContext.stagingBufferUvs.put(1, 1, 0, packedMaterialData);
+		sceneContext.stagingBufferUvs.put(0, 1, 0, packedMaterialData);
+		sceneContext.stagingBufferUvs.put(1, 0, 0, packedMaterialData);
+	}
+
+	private void uploadHorizonTile(SceneContext sceneContext, int tileExX, int tileExY, int tileZ, int avgSwHeight, int avgSeHeight, int avgNeHeight, int avgNwHeight) {
+		final Scene scene = sceneContext.scene;
+
+		if (sceneContext.area == null) {
+			return;
+		}
+
+		HorizonTile horizonTile = sceneContext.area.horizonTile;
+
+		int color = 0;
+		float fromX = 0;
+		float fromY = 0;
+		float toX = LOCAL_TILE_SIZE;
+		float toY = LOCAL_TILE_SIZE;
+
+		int swHeight = 0;
+		int seHeight = 0;
+		int neHeight = 0;
+		int nwHeight = 0;
+
+		int terrainData = packTerrainData(true, 0, horizonTile.getWaterType(), tileZ);
+
+		sceneContext.stagingBufferNormals.ensureCapacity(24);
+		sceneContext.stagingBufferNormals.put(0, -1, 0, terrainData);
+		sceneContext.stagingBufferNormals.put(0, -1, 0, terrainData);
+		sceneContext.stagingBufferNormals.put(0, -1, 0, terrainData);
+
+		sceneContext.stagingBufferNormals.put(0, -1, 0, terrainData);
+		sceneContext.stagingBufferNormals.put(0, -1, 0, terrainData);
+		sceneContext.stagingBufferNormals.put(0, -1, 0, terrainData);
+
+		sceneContext.stagingBufferVertices.ensureCapacity(24);
+		sceneContext.stagingBufferVertices.put(toX, neHeight, toY, color);
+		sceneContext.stagingBufferVertices.put(fromX, nwHeight, toY, color);
+		sceneContext.stagingBufferVertices.put(toX, seHeight, fromY, color);
+
+		sceneContext.stagingBufferVertices.put(fromX, swHeight, fromY, color);
+		sceneContext.stagingBufferVertices.put(toX, seHeight, fromY, color);
+		sceneContext.stagingBufferVertices.put(fromX, nwHeight, toY, color);
+
+		int packedMaterialData = modelPusher.packMaterialData(horizonTile.getMaterial(), -1, ModelOverride.NONE, UvType.GEOMETRY, false);
 
 		sceneContext.stagingBufferUvs.ensureCapacity(24);
 		sceneContext.stagingBufferUvs.put(0, 0, 0, packedMaterialData);

@@ -3604,7 +3604,11 @@
     "aabbs": [
       [ 2689, 4862, 2750, 4801 ]
     ],
-    "hideOtherAreas": true
+    "hideOtherAreas": true,
+    "horizonTile": {
+      "material": "WATER_FLAT",
+      "waterType": "WATER"
+    }
   },
   {
     "name": "MIND_ALTAR",

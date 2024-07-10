@@ -22,6 +22,8 @@ public class Area {
 	@SerializedName("aabbs")
 	private AABB[] rawAabbs;
 
+	public HorizonTile horizonTile;
+
 	public transient AABB[] aabbs;
 	private transient boolean normalized;
 
