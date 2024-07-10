@@ -89,7 +89,6 @@ import rs117.hd.config.ShadowMode;
 import rs117.hd.config.UIScalingMode;
 import rs117.hd.config.VanillaShadowMode;
 import rs117.hd.data.WaterType;
-import rs117.hd.data.environments.Area;
 import rs117.hd.data.materials.Material;
 import rs117.hd.model.ModelHasher;
 import rs117.hd.model.ModelOffsets;
@@ -101,6 +100,7 @@ import rs117.hd.opengl.shader.ShaderException;
 import rs117.hd.opengl.shader.Template;
 import rs117.hd.overlays.FrameTimer;
 import rs117.hd.overlays.Timer;
+import rs117.hd.scene.AreaManager;
 import rs117.hd.scene.EnvironmentManager;
 import rs117.hd.scene.FishingSpotReplacer;
 import rs117.hd.scene.LightManager;
@@ -223,6 +223,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 
 	@Inject
 	private TextureManager textureManager;
+
+	@Inject
+	private AreaManager areaManager;
 
 	@Inject
 	private LightManager lightManager;
@@ -656,6 +659,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 				lastStretchedCanvasWidth = lastStretchedCanvasHeight = 0;
 				lastAntiAliasingMode = null;
 
+				areaManager.startUp();
 				tileOverrideManager.startUp();
 				modelOverrideManager.startUp();
 				modelPusher.startUp();
@@ -670,10 +674,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 				isInHouse = false;
 				isInChambersOfXeric = false;
 
-				if (client.getGameState() == GameState.LOGGED_IN) {
-					// We need to force the client to reload the scene if GPU flags have changed
+				// We need to force the client to reload the scene since we're changing GPU flags
+				if (client.getGameState() == GameState.LOGGED_IN)
 					client.setGameState(GameState.LOADING);
-				}
 
 				checkGLErrors();
 
@@ -712,6 +715,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 			lightManager.shutDown();
 			environmentManager.shutDown();
 			fishingSpotReplacer.shutDown();
+			areaManager.shutDown();
 
 			if (lwjglInitialized) {
 				lwjglInitialized = false;
@@ -755,6 +759,10 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 
 			// force main buffer provider rebuild to turn off alpha channel
 			client.resizeCanvas();
+
+			// Force the client to reload the scene to reset any scene modifications we may have made
+			if (client.getGameState() == GameState.LOGGED_IN)
+				client.setGameState(GameState.LOADING);
 		});
 	}
 
@@ -2485,7 +2493,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		if (!isActive)
 			return;
 
-		if (skipScene != scene && HDUtils.sceneIntersects(scene, getExpandedMapLoadingChunks(), Area.THE_GAUNTLET)) {
+		if (skipScene != scene && HDUtils.sceneIntersects(scene, getExpandedMapLoadingChunks(), areaManager.getArea("THE_GAUNTLET"))) {
 			// Some game objects in The Gauntlet are spawned in too late for the initial scene load,
 			// so we skip the first scene load and trigger another scene load the next game tick
 			reloadSceneNextGameTick();
@@ -2602,7 +2610,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		sceneContext.stagingBufferUvs.clear();
 		sceneContext.stagingBufferNormals.clear();
 
-		if (sceneContext.intersects(Area.PLAYER_OWNED_HOUSE)) {
+		if (sceneContext.intersects(areaManager.getArea("PLAYER_OWNED_HOUSE"))) {
 			if (!isInHouse) {
 				// POH takes 1 game tick to enter, then 2 game ticks to load per floor
 				reloadSceneIn(7);
@@ -2617,7 +2625,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 				isInHouse = false;
 			}
 
-			isInChambersOfXeric = sceneContext.intersects(Area.CHAMBERS_OF_XERIC);
+			isInChambersOfXeric = sceneContext.intersects(areaManager.getArea("CHAMBERS_OF_XERIC"));
 		}
 		minimapRenderer.generateMinimapImage();
 	}
@@ -2730,6 +2738,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 						switch (key) {
 							case KEY_EXPANDED_MAP_LOADING_CHUNKS:
 								client.setExpandedMapLoading(getExpandedMapLoadingChunks());
+								// fall-through
+							case KEY_HIDE_UNRELATED_AREAS:
 								if (client.getGameState() == GameState.LOGGED_IN)
 									client.setGameState(GameState.LOADING);
 								break;

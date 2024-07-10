@@ -739,7 +739,6 @@ public interface HdPluginConfig extends Config
 		warning =
 			"This setting can cause RuneLite to crash, and it can be difficult to undo.\n" +
 			"Only enable it if you are seeing broken colors. Are you sure you want to enable this setting?",
-		position = 1,
 		section = miscellaneousSettings
 	)
 	default boolean macosIntelWorkaround()
@@ -754,7 +753,6 @@ public interface HdPluginConfig extends Config
 		description =
 			"Replace the infernal cape texture with a more detailed version.<br>" +
 			"Note, with Anisotropic Filtering above zero, the cape may look blurry when zoomed out.",
-		position = 2,
 		section = miscellaneousSettings
 	)
 	default boolean hdInfernalTexture() {
@@ -768,7 +766,6 @@ public interface HdPluginConfig extends Config
 		description =
 			"Previously, HD attempted to reduce over-exposure by capping the maximum color brightness,<br>" +
 			"which changed white colors into dull shades of grey. This option brings back that old behaviour.",
-		position = 4,
 		section = miscellaneousSettings
 	)
 	default boolean legacyGreyColors() {
@@ -782,7 +779,6 @@ public interface HdPluginConfig extends Config
 		description =
 			"Blend between colors similarly to how it works in vanilla, with clearly defined bands of color.<br>" +
 			"This isn't really noticeable on textured surfaces, and is intended to be used without ground textures.",
-		position = 5,
 		section = miscellaneousSettings
 	)
 	default boolean vanillaColorBanding() {
@@ -797,7 +793,6 @@ public interface HdPluginConfig extends Config
 		warning =
 			"<html>This <b>will not</b> result in better performance. It is recommended only if you are unable to install<br>" +
 			"the 64-bit version of RuneLite, or if your computer has a very low amount of memory available.</html>",
-		position = 6,
 		section = miscellaneousSettings
 	)
 	default boolean lowMemoryMode() {
@@ -809,7 +804,6 @@ public interface HdPluginConfig extends Config
 		keyName = KEY_REPLACE_FISHING_SPOTS,
 		name = "Replace Fishing Spots",
 		description = "Replace certain fishing spots with more appropriate models that are easier to see.",
-		position = 7,
 		section = miscellaneousSettings
 	)
 	default boolean replaceFishingSpots() {
@@ -821,7 +815,6 @@ public interface HdPluginConfig extends Config
 		keyName = KEY_COLOR_FILTER,
 		name = "Color Filter",
 		description = "Apply a color filter to the game as a post-processing effect.",
-		position = 8,
 		section = miscellaneousSettings
 	)
 	default ColorFilter colorFilter() {
@@ -836,7 +829,6 @@ public interface HdPluginConfig extends Config
 			"Removes vertex snapping from most animations.<br>" +
 			"Most animations are barely affected by this, and it only has an effect if the animation smoothing plugin is turned off.<br>" +
 			"To see quite clearly what impact this option has, a good example is the godsword idle animation.",
-		position = 9,
 		section = miscellaneousSettings
 	)
 	default boolean removeVertexSnapping() {
@@ -919,6 +911,17 @@ public interface HdPluginConfig extends Config
 	)
 	default boolean decoupleSkyAndWaterColor() {
 		return false;
+	}
+
+	String KEY_HIDE_UNRELATED_AREAS = "hideUnrelatedAreas";
+	@ConfigItem(
+		keyName = KEY_HIDE_UNRELATED_AREAS,
+		name = "Hide unrelated areas",
+		description = "Hide unrelated areas which you shouldn't see from your current position.",
+		section = experimentalSettings
+	)
+	default boolean hideUnrelatedAreas() {
+		return true;
 	}
 
 
