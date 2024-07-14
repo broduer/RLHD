@@ -339,11 +339,15 @@
     "ambientStrength": 3.5,
     "directionalColor": "#ffc875",
     "directionalStrength": 0,
+    "groundFogOpacity": 1,
+    "groundFogStart": -1900,
+    "groundFogEnd": -2750,
+    "instantTransition": true,
     "sunAngles": [
       80,
       190
     ],
-    "fogDepth": 20
+    "fogDepth": 50
   },
   {
     "area": "BARROWS_TUNNELS",
@@ -351,11 +355,12 @@
     "ambientStrength": 3,
     "directionalColor": "#ffc875",
     "directionalStrength": 0.5,
+    "instantTransition": true,
     "sunAngles": [
       80,
       190
     ],
-    "fogDepth": 20
+    "fogDepth": 30
   },
   {
     "area": "BARROWS",
@@ -419,9 +424,9 @@
   {
     "area": "MORYTANIA",
     "ambientColor": "#5a8cc0",
-    "ambientStrength": 2,
+    "ambientStrength": 1.5,
     "directionalColor": "#f8bf68",
-    "directionalStrength": 2,
+    "directionalStrength": 1.25,
     "fogColor": "#1e314b",
     "fogDepth": 40,
     "groundFogStart": -150,
@@ -498,7 +503,7 @@
     "fogDepth": 40
   },
   {
-    "area": "MISTHALIN_MYSTERY_MANOR",
+    "area": "MISTHALIN_MYSTERY_MANOR_REGION",
     "lightningEffects": true,
     "ambientColor": "#615c57",
     "ambientStrength": 1.5,
@@ -587,6 +592,30 @@
     "area": "PYRAMID_PLUNDER",
     "ambientColor": "#b59b79",
     "directionalColor": "#8a9eb6",
+    "directionalStrength": 0.5,
+    "sunAngles": [
+      80,
+      190
+    ],
+    "fogColor": "#190d02",
+    "fogDepth": 40
+  },
+  {
+    "area": "SOPHANEM_TEMPLE_BANK",
+    "ambientColor": "#b59b79",
+    "directionalColor": "#8a9eb6",
+    "directionalStrength": 0.75,
+    "sunAngles": [
+      80,
+      190
+    ],
+    "fogColor": "#190d02",
+    "fogDepth": 65
+  },
+  {
+    "area": "SCARAB_LAIR_TEMPLE",
+    "ambientColor": "#b59b79",
+    "directionalColor": "#8a9eb6",
     "directionalStrength": 0.75,
     "sunAngles": [
       80,
@@ -615,6 +644,36 @@
     "directionalStrength": 2.5,
     "fogColor": "#aebde0",
     "fogDepth": 70
+  },
+  {
+    "area": "RELLEKKA_SNOWY_REGION",
+    "ambientColor": "#6fb0ff",
+    "ambientStrength": 1,
+    "directionalColor": "#f4e5c9",
+    "directionalStrength": 2,
+    "fogColor": "#aebde0",
+    "fogDepth": 70
+  },
+  {
+    "area": "RELLEKKA_HUNTER_ICEBERG",
+    "ambientColor": "#6fb0ff",
+    "ambientStrength": 0.75,
+    "directionalColor": "#f4e5c9",
+    "directionalStrength": 1,
+    "fogColor": "#aebde0",
+    "fogDepth": 70
+  },
+  {
+    "area": "ICEBERG",
+    "ambientColor": "#7CB6EF",
+    "ambientStrength": 1,
+    "directionalColor": "#f4e5c9",
+    "directionalStrength": 1.5,
+    "fogColor": "#aebde0",
+    "fogDepth": 20,
+    "sunAngles": [
+      45, 235
+    ]
   },
   {
     "area": "MOUNTAIN_CAMP_ENTRY_PATH",
@@ -648,6 +707,28 @@
     "fogDepth": 40,
     "groundFogEnd": -400,
     "groundFogOpacity": 0.3
+  },
+  {
+    "area": "LIGHTHOUSE_DUNGEON",
+    "ambientColor": "#ffffff",
+    "ambientStrength": 1,
+    "directionalColor": "#ffffff",
+    "directionalStrength": 0.25,
+    "fogColor": "#000000",
+    "sunAngles": [
+      52, 235
+    ],
+    "fogDepth": 45
+  },
+  {
+    "area": "WATERBIRTH_ISLAND",
+    "ambientColor": "#6fb0ff",
+    "ambientStrength": 1.75,
+    "sunAngles": [ 72, 235 ],
+    "directionalColor": "#f4e5c9",
+    "directionalStrength": 1.5,
+    "fogColor": "#adb9c4",
+    "fogDepth": 45
   },
   {
     "area": "PENGUIN_BASE",
@@ -874,11 +955,22 @@
   {
     "area": "ZEAH_SNOWY_NORTHERN_REGION",
     "ambientColor": "#6fb0ff",
-    "ambientStrength": 1.5,
+    "ambientStrength": 0.85,
     "directionalColor": "#f4e5c9",
-    "directionalStrength": 2.5,
+    "directionalStrength": 1.5,
     "fogColor": "#aebde0",
     "fogDepth": 70
+  },
+  {
+    "area": "WINTERTODT_ARENA",
+    "instantTransition": true,
+    "ambientColor": "#6fb0ff",
+    "ambientStrength": 1,
+    "sunAngles": [ 72, 235 ],
+    "directionalColor": "#f4e5c9",
+    "directionalStrength": 0.75,
+    "fogColor": "#aebde3",
+    "fogDepth": 75
   },
   {
     "area": "ARCEUUS",
@@ -1050,6 +1142,7 @@
     ],
     "fogColor": "#002033",
     "fogDepth": 15,
+    "groundFogOpacity": 0.75,
     "waterCausticsStrength": 40
   },
   {
@@ -1188,6 +1281,18 @@
     "fogDepth": 6.5
   },
   {
+    "area": "RANDOM_EVENT_GRAVEDIGGER",
+    "ambientColor": "#5a8cc0",
+    "ambientStrength": 3,
+    "directionalColor": "#5a8cc0",
+    "directionalStrength": 0.75,
+    "fogColor": "#1e314b",
+    "fogDepth": 40,
+    "groundFogStart": -150,
+    "groundFogEnd": -350,
+    "groundFogOpacity": 0.5
+  },
+  {
     "area": "GIANTS_FOUNDRY",
     "ambientStrength": 1.1,
     "directionalColor": "#ffc199",
@@ -1259,13 +1364,26 @@
   {
     "area": "MAGE_ARENA_BANK",
     "ambientColor": "#97baff",
-    "ambientStrength": 1.5,
-    "directionalStrength": 1,
+    "ambientStrength": 1.75,
+    "instantTransition": true,
+    "directionalStrength": 0.25,
     "sunAngles": [
       80,
       190
     ],
-    "fogDepth": 40
+    "fogDepth": 60
+  },
+  {
+    "area": "MAGE_ARENA_GOD_STATUES",
+    "ambientColor": "#97baff",
+    "ambientStrength": 1.75,
+    "instantTransition": true,
+    "directionalStrength": 0.25,
+    "sunAngles": [
+      80,
+      190
+    ],
+    "fogDepth": 60
   },
   {
     "area": "TEARS_OF_GUTHIX",
@@ -1458,6 +1576,41 @@
       215
     ],
     "fogDepth": 46
+  },
+  {
+    "area": "EARTHBOUND_CAVERN",
+    "sunAngles": [ 62, 210 ],
+    "waterColor": "#477d95"
+  },
+  {
+    "area": "RED_CHINCHOMPA_HUNTING_GROUND",
+    "ambientColor": "#FFFEB0",
+    "ambientStrength": 0.45,
+    "directionalColor": "#FFFEB0",
+    "directionalStrength": 0.65,
+    "sunAngles": [
+      65,
+      102
+    ],
+    "fogDepth": 30
+  },
+  {
+    "area": "RALOS_RISE_LOWER",
+    "ambientColor": "#6fb0ff",
+    "ambientStrength": 1.75,
+    "directionalColor": "#f4e5c9",
+    "directionalStrength": 3,
+    "fogColor": "#aebde0",
+    "fogDepth": 30
+  },
+  {
+    "area": "RALOS_RISE_UPPER",
+    "ambientColor": "#6fb0ff",
+    "ambientStrength": 0.8,
+    "directionalColor": "#f4e5c9",
+    "directionalStrength": 2,
+    "fogColor": "#aebde0",
+    "fogDepth": 50
   },
   {
     "key": "OVERWORLD",

@@ -32,33 +32,37 @@ import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import rs117.hd.HdPlugin;
+import rs117.hd.HdPluginConfig;
 import rs117.hd.data.WaterType;
-import rs117.hd.data.environments.Area;
 import rs117.hd.data.materials.GroundMaterial;
 import rs117.hd.data.materials.Material;
 import rs117.hd.data.materials.UvType;
 import rs117.hd.model.ModelPusher;
+import rs117.hd.scene.areas.AABB;
+import rs117.hd.scene.areas.Area;
 import rs117.hd.scene.model_overrides.ModelOverride;
 import rs117.hd.scene.model_overrides.ObjectType;
 import rs117.hd.scene.tile_overrides.TileOverride;
 import rs117.hd.utils.HDUtils;
 import rs117.hd.utils.ModelHash;
 
+import static net.runelite.api.Constants.SCENE_SIZE;
+import static net.runelite.api.Constants.*;
 import static net.runelite.api.Perspective.*;
 import static rs117.hd.HdPlugin.NORMAL_SIZE;
 import static rs117.hd.HdPlugin.SCALAR_BYTES;
 import static rs117.hd.HdPlugin.UV_SIZE;
 import static rs117.hd.HdPlugin.VERTEX_SIZE;
+import static rs117.hd.scene.tile_overrides.TileOverride.NONE;
 import static rs117.hd.scene.tile_overrides.TileOverride.OVERLAY_FLAG;
 
-@SuppressWarnings("UnnecessaryLocalVariable")
-@Singleton
 @Slf4j
-public
-class SceneUploader {
+@Singleton
+@SuppressWarnings("UnnecessaryLocalVariable")
+public class SceneUploader {
 	public static final int SCENE_ID_MASK = 0xFFFF;
 	public static final int EXCLUDED_FROM_SCENE_BUFFER = 0xFFFFFFFF;
-	public static final int SCENE_OFFSET = (Constants.EXTENDED_SCENE_SIZE - Constants.SCENE_SIZE) / 2; // offset for sxy -> msxy
+	public static final int SCENE_OFFSET = (EXTENDED_SCENE_SIZE - SCENE_SIZE) / 2; // offset for sxy -> msxy
 
 	private static final float[] UP_NORMAL = { 0, -1, 0 };
 
@@ -67,6 +71,9 @@ class SceneUploader {
 
 	@Inject
 	private HdPlugin plugin;
+
+	@Inject
+	private HdPluginConfig config;
 
 	@Inject
 	private TileOverrideManager tileOverrideManager;
@@ -83,12 +90,56 @@ class SceneUploader {
 	public void upload(SceneContext sceneContext) {
 		Stopwatch stopwatch = Stopwatch.createStarted();
 
-		for (int z = 0; z < Constants.MAX_Z; ++z) {
-			for (int x = 0; x < Constants.EXTENDED_SCENE_SIZE; ++x) {
-				for (int y = 0; y < Constants.EXTENDED_SCENE_SIZE; ++y) {
-					Tile tile = sceneContext.scene.getExtendedTiles()[z][x][y];
-					if (tile != null)
-						upload(sceneContext, tile, x, y);
+		int baseX = sceneContext.scene.getBaseX();
+		int baseY = sceneContext.scene.getBaseY();
+		int baseExX = baseX - SCENE_OFFSET;
+		int baseExY = baseY - SCENE_OFFSET;
+
+		boolean hideUnrelatedAreas = config.hideUnrelatedAreas() && !sceneContext.scene.isInstance();
+		if (hideUnrelatedAreas) {
+			// Set up an AABB for the chunk the scene is centered around
+			// TODO: make this work even if the player teleports from one area to another without triggering a scene load
+			AABB centerChunk = new AABB(
+				baseX + 6 * CHUNK_SIZE,
+				baseY + 6 * CHUNK_SIZE,
+				baseX + 7 * CHUNK_SIZE - 1,
+				baseY + 7 * CHUNK_SIZE - 1
+			);
+
+			outer:
+			for (Area area : AreaManager.AREAS) {
+				if (!area.hideOtherAreas)
+					continue;
+
+				for (AABB aabb : area.aabbs) {
+					if (aabb.intersects(centerChunk)) {
+						sceneContext.area = area;
+						break outer;
+					}
+				}
+			}
+
+			if (sceneContext.area == null) {
+				hideUnrelatedAreas = false;
+			} else {
+				log.debug("Hiding areas outside of {}", sceneContext.area);
+			}
+		}
+
+		var tiles = sceneContext.scene.getExtendedTiles();
+		for (int z = 0; z < MAX_Z; ++z) {
+			for (int x = 0; x < EXTENDED_SCENE_SIZE; ++x) {
+				for (int y = 0; y < EXTENDED_SCENE_SIZE; ++y) {
+					Tile tile = tiles[z][x][y];
+					if (tile == null)
+						continue;
+
+					if (hideUnrelatedAreas && !sceneContext.area.containsPoint(baseExX + x, baseExY + y, z)) {
+						sceneContext.scene.removeTile(tile);
+						continue;
+					}
+
+					upload(sceneContext, tile, x, y);
 				}
 			}
 		}
@@ -109,13 +160,20 @@ class SceneUploader {
 	}
 
 	public void fillGaps(SceneContext sceneContext) {
-		int sceneMin = sceneContext.expandedMapLoadingChunks * -8;
-		int sceneMax = SCENE_SIZE + sceneContext.expandedMapLoadingChunks * 8;
+		int sceneMin = -sceneContext.expandedMapLoadingChunks * CHUNK_SIZE;
+		int sceneMax = SCENE_SIZE + sceneContext.expandedMapLoadingChunks * CHUNK_SIZE;
+
+		int baseExX = sceneContext.scene.getBaseX() - SCENE_OFFSET;
+		int baseExY = sceneContext.scene.getBaseY() - SCENE_OFFSET;
+		boolean hideUnrelatedAreas = config.hideUnrelatedAreas() && sceneContext.area != null && !sceneContext.scene.isInstance();
 
 		Tile[][][] extendedTiles = sceneContext.scene.getExtendedTiles();
-		for (int tileZ = 0; tileZ < Constants.MAX_Z; ++tileZ) {
-			for (int tileExX = 0; tileExX < Constants.EXTENDED_SCENE_SIZE; ++tileExX) {
-				for (int tileExY = 0; tileExY < Constants.EXTENDED_SCENE_SIZE; ++tileExY) {
+		for (int tileZ = 0; tileZ < MAX_Z; ++tileZ) {
+			for (int tileExX = 0; tileExX < EXTENDED_SCENE_SIZE; ++tileExX) {
+				for (int tileExY = 0; tileExY < EXTENDED_SCENE_SIZE; ++tileExY) {
+					if (hideUnrelatedAreas && !sceneContext.area.containsPoint(baseExX + tileExX, baseExY + tileExY, tileZ))
+						continue;
+
 					int tileX = tileExX - SCENE_OFFSET;
 					int tileY = tileExY - SCENE_OFFSET;
 					Tile tile = extendedTiles[tileZ][tileExX][tileExY];
@@ -344,9 +402,10 @@ class SceneUploader {
 		DecorativeObject decorativeObject = tile.getDecorativeObject();
 		if (decorativeObject != null) {
 			Renderable renderable = decorativeObject.getRenderable();
+			int orientation = HDUtils.getBakedOrientation(decorativeObject.getConfig());
 			if (renderable instanceof Model) {
 				uploadModel(sceneContext, tile, ModelHash.packUuid(ModelHash.TYPE_OBJECT, decorativeObject.getId()), (Model) renderable,
-					HDUtils.getBakedOrientation(decorativeObject.getConfig()),
+					orientation,
 					ObjectType.DECORATIVE_OBJECT
 				);
 			}
@@ -354,7 +413,7 @@ class SceneUploader {
 			Renderable renderable2 = decorativeObject.getRenderable2();
 			if (renderable2 instanceof Model) {
 				uploadModel(sceneContext, tile, ModelHash.packUuid(ModelHash.TYPE_OBJECT, decorativeObject.getId()), (Model) renderable2,
-					HDUtils.getBakedOrientation(decorativeObject.getConfig()),
+					orientation,
 					ObjectType.DECORATIVE_OBJECT
 				);
 			}
@@ -478,10 +537,11 @@ class SceneUploader {
 
 			if (waterType == WaterType.NONE) {
 				if (textureId != -1) {
-					swMaterial = Material.fromVanillaTexture(textureId);
-					seMaterial = Material.fromVanillaTexture(textureId);
-					neMaterial = Material.fromVanillaTexture(textureId);
-					nwMaterial = Material.fromVanillaTexture(textureId);
+					var material = Material.fromVanillaTexture(textureId);
+					// Disable tile overrides for newly introduced vanilla textures
+					if (material == Material.VANILLA)
+						override = NONE;
+					swMaterial = seMaterial = neMaterial = nwMaterial = material;
 				}
 
 				swNormals = sceneContext.vertexTerrainNormals.getOrDefault(swVertexKey, swNormals);
@@ -555,29 +615,26 @@ class SceneUploader {
 				swVertexIsOverlay = true;
 
 
-			int swTerrainData = packTerrainData(true, 0, waterType, tileZ);
-			int seTerrainData = packTerrainData(true, 0, waterType, tileZ);
-			int nwTerrainData = packTerrainData(true, 0, waterType, tileZ);
-			int neTerrainData = packTerrainData(true, 0, waterType, tileZ);
+			int terrainData = packTerrainData(true, 0, waterType, tileZ);
 
 			sceneContext.stagingBufferNormals.ensureCapacity(24);
-			sceneContext.stagingBufferNormals.put(neNormals[0], neNormals[2], neNormals[1], neTerrainData);
-			sceneContext.stagingBufferNormals.put(nwNormals[0], nwNormals[2], nwNormals[1], nwTerrainData);
-			sceneContext.stagingBufferNormals.put(seNormals[0], seNormals[2], seNormals[1], seTerrainData);
+			sceneContext.stagingBufferNormals.put(neNormals[0], neNormals[2], neNormals[1], terrainData);
+			sceneContext.stagingBufferNormals.put(nwNormals[0], nwNormals[2], nwNormals[1], terrainData);
+			sceneContext.stagingBufferNormals.put(seNormals[0], seNormals[2], seNormals[1], terrainData);
 
-			sceneContext.stagingBufferNormals.put(swNormals[0], swNormals[2], swNormals[1], swTerrainData);
-			sceneContext.stagingBufferNormals.put(seNormals[0], seNormals[2], seNormals[1], seTerrainData);
-			sceneContext.stagingBufferNormals.put(nwNormals[0], nwNormals[2], nwNormals[1], nwTerrainData);
+			sceneContext.stagingBufferNormals.put(swNormals[0], swNormals[2], swNormals[1], terrainData);
+			sceneContext.stagingBufferNormals.put(seNormals[0], seNormals[2], seNormals[1], terrainData);
+			sceneContext.stagingBufferNormals.put(nwNormals[0], nwNormals[2], nwNormals[1], terrainData);
 
 
 			sceneContext.stagingBufferVertices.ensureCapacity(24);
-			sceneContext.stagingBufferVertices.put(localNeVertexX, neHeight, localNeVertexY, neColor);
-			sceneContext.stagingBufferVertices.put(localNwVertexX, nwHeight, localNwVertexY, nwColor);
-			sceneContext.stagingBufferVertices.put(localSeVertexX, seHeight, localSeVertexY, seColor);
+			sceneContext.stagingBufferVertices.put((float) localNeVertexX, neHeight, localNeVertexY, neColor);
+			sceneContext.stagingBufferVertices.put((float) localNwVertexX, nwHeight, localNwVertexY, nwColor);
+			sceneContext.stagingBufferVertices.put((float) localSeVertexX, seHeight, localSeVertexY, seColor);
 
-			sceneContext.stagingBufferVertices.put(localSwVertexX, swHeight, localSwVertexY, swColor);
-			sceneContext.stagingBufferVertices.put(localSeVertexX, seHeight, localSeVertexY, seColor);
-			sceneContext.stagingBufferVertices.put(localNwVertexX, nwHeight, localNwVertexY, nwColor);
+			sceneContext.stagingBufferVertices.put((float) localSwVertexX, swHeight, localSwVertexY, swColor);
+			sceneContext.stagingBufferVertices.put((float) localSeVertexX, seHeight, localSeVertexY, seColor);
+			sceneContext.stagingBufferVertices.put((float) localNwVertexX, nwHeight, localNwVertexY, nwColor);
 
 			bufferLength += 6;
 
@@ -710,13 +767,13 @@ class SceneUploader {
 			sceneContext.stagingBufferNormals.put(nwNormals[0], nwNormals[2], nwNormals[1], nwTerrainData);
 
 			sceneContext.stagingBufferVertices.ensureCapacity(24);
-			sceneContext.stagingBufferVertices.put(localNeVertexX, neHeight + neDepth, localNeVertexY, neColor);
-			sceneContext.stagingBufferVertices.put(localNwVertexX, nwHeight + nwDepth, localNwVertexY, nwColor);
-			sceneContext.stagingBufferVertices.put(localSeVertexX, seHeight + seDepth, localSeVertexY, seColor);
+			sceneContext.stagingBufferVertices.put((float) localNeVertexX, neHeight + neDepth, localNeVertexY, neColor);
+			sceneContext.stagingBufferVertices.put((float) localNwVertexX, nwHeight + nwDepth, localNwVertexY, nwColor);
+			sceneContext.stagingBufferVertices.put((float) localSeVertexX, seHeight + seDepth, localSeVertexY, seColor);
 
-			sceneContext.stagingBufferVertices.put(localSwVertexX, swHeight + swDepth, localSwVertexY, swColor);
-			sceneContext.stagingBufferVertices.put(localSeVertexX, seHeight + seDepth, localSeVertexY, seColor);
-			sceneContext.stagingBufferVertices.put(localNwVertexX, nwHeight + nwDepth, localNwVertexY, nwColor);
+			sceneContext.stagingBufferVertices.put((float) localSwVertexX, swHeight + swDepth, localSwVertexY, swColor);
+			sceneContext.stagingBufferVertices.put((float) localSeVertexX, seHeight + seDepth, localSeVertexY, seColor);
+			sceneContext.stagingBufferVertices.put((float) localNwVertexX, nwHeight + nwDepth, localNwVertexY, nwColor);
 
 			bufferLength += 6;
 
@@ -841,9 +898,11 @@ class SceneUploader {
 				waterType = proceduralGenerator.seasonalWaterType(override, textureId);
 				if (waterType == WaterType.NONE) {
 					if (textureId != -1) {
-						materialA = Material.fromVanillaTexture(textureId);
-						materialB = Material.fromVanillaTexture(textureId);
-						materialC = Material.fromVanillaTexture(textureId);
+						var material = Material.fromVanillaTexture(textureId);
+						// Disable tile overrides for newly introduced vanilla textures
+						if (material == Material.VANILLA)
+							override = NONE;
+						materialA = materialB = materialC = material;
 					}
 
 					normalsA = sceneContext.vertexTerrainNormals.getOrDefault(vertexKeyA, normalsA);
@@ -918,19 +977,17 @@ class SceneUploader {
 					vertexCIsOverlay = true;
 			}
 
-			int aTerrainData = packTerrainData(true, 0, waterType, tileZ);
-			int bTerrainData = packTerrainData(true, 0, waterType, tileZ);
-			int cTerrainData = packTerrainData(true, 0, waterType, tileZ);
+			int terrainData = packTerrainData(true, 0, waterType, tileZ);
 
 			sceneContext.stagingBufferNormals.ensureCapacity(12);
-			sceneContext.stagingBufferNormals.put(normalsA[0], normalsA[2], normalsA[1], aTerrainData);
-			sceneContext.stagingBufferNormals.put(normalsB[0], normalsB[2], normalsB[1], bTerrainData);
-			sceneContext.stagingBufferNormals.put(normalsC[0], normalsC[2], normalsC[1], cTerrainData);
+			sceneContext.stagingBufferNormals.put(normalsA[0], normalsA[2], normalsA[1], terrainData);
+			sceneContext.stagingBufferNormals.put(normalsB[0], normalsB[2], normalsB[1], terrainData);
+			sceneContext.stagingBufferNormals.put(normalsC[0], normalsC[2], normalsC[1], terrainData);
 
 			sceneContext.stagingBufferVertices.ensureCapacity(12);
-			sceneContext.stagingBufferVertices.put(localVertices[0][0], localVertices[0][2], localVertices[0][1], colorA);
-			sceneContext.stagingBufferVertices.put(localVertices[1][0], localVertices[1][2], localVertices[1][1], colorB);
-			sceneContext.stagingBufferVertices.put(localVertices[2][0], localVertices[2][2], localVertices[2][1], colorC);
+			sceneContext.stagingBufferVertices.put((float) localVertices[0][0], localVertices[0][2], localVertices[0][1], colorA);
+			sceneContext.stagingBufferVertices.put((float) localVertices[1][0], localVertices[1][2], localVertices[1][1], colorB);
+			sceneContext.stagingBufferVertices.put((float) localVertices[2][0], localVertices[2][2], localVertices[2][1], colorC);
 
 			bufferLength += 3;
 
@@ -1059,9 +1116,24 @@ class SceneUploader {
 				sceneContext.stagingBufferNormals.put(normalsC[0], normalsC[2], normalsC[1], cTerrainData);
 
 				sceneContext.stagingBufferVertices.ensureCapacity(12);
-				sceneContext.stagingBufferVertices.put(localVertices[0][0], localVertices[0][2] + depthA, localVertices[0][1], colorA);
-				sceneContext.stagingBufferVertices.put(localVertices[1][0], localVertices[1][2] + depthB, localVertices[1][1], colorB);
-				sceneContext.stagingBufferVertices.put(localVertices[2][0], localVertices[2][2] + depthC, localVertices[2][1], colorC);
+				sceneContext.stagingBufferVertices.put(
+					(float) localVertices[0][0],
+					localVertices[0][2] + depthA,
+					localVertices[0][1],
+					colorA
+				);
+				sceneContext.stagingBufferVertices.put(
+					(float) localVertices[1][0],
+					localVertices[1][2] + depthB,
+					localVertices[1][1],
+					colorB
+				);
+				sceneContext.stagingBufferVertices.put(
+					(float) localVertices[2][0],
+					localVertices[2][2] + depthC,
+					localVertices[2][1],
+					colorC
+				);
 
 				bufferLength += 3;
 
@@ -1088,10 +1160,10 @@ class SceneUploader {
 		final Scene scene = sceneContext.scene;
 
 		int color = 0;
-		int fromX = 0;
-		int fromY = 0;
-		int toX = LOCAL_TILE_SIZE;
-		int toY = LOCAL_TILE_SIZE;
+		float fromX = 0;
+		float fromY = 0;
+		float toX = LOCAL_TILE_SIZE;
+		float toY = LOCAL_TILE_SIZE;
 
 		final int[][][] tileHeights = scene.getTileHeights();
 		int swHeight = tileHeights[tileZ][tileExX][tileExY];

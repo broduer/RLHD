@@ -21,8 +21,8 @@ import net.runelite.api.coords.*;
 import net.runelite.client.callback.ClientThread;
 import rs117.hd.HdPlugin;
 import rs117.hd.config.SeasonalTheme;
-import rs117.hd.data.environments.Area;
 import rs117.hd.model.ModelPusher;
+import rs117.hd.scene.areas.Area;
 import rs117.hd.scene.tile_overrides.TileOverride;
 import rs117.hd.utils.FileWatcher;
 import rs117.hd.utils.HDUtils;
@@ -34,8 +34,8 @@ import static rs117.hd.scene.tile_overrides.TileOverride.OVERLAY_FLAG;
 import static rs117.hd.utils.HDUtils.localToWorld;
 import static rs117.hd.utils.ResourcePath.path;
 
-@Singleton
 @Slf4j
+@Singleton
 public class TileOverrideManager {
 	private static final ResourcePath TILE_OVERRIDES_PATH = Props.getPathOrDefault(
 		"rlhd.tile-overrides-path",
@@ -249,23 +249,21 @@ public class TileOverrideManager {
 		outer:
 		for (int id : ids) {
 			var entries = idMatchOverrides.get(id);
-			if (entries != null) {
-				for (var entry : entries) {
-					var area = entry.getKey();
-					if (area.containsPoint(worldPos)) {
-						match = entry.getValue();
-						match.queriedAsOverlay = (id & OVERLAY_FLAG) != 0;
-						break outer;
-					}
+			for (var entry : entries) {
+				var area = entry.getKey();
+				if (area.containsPoint(worldPos)) {
+					match = entry.getValue();
+					match.queriedAsOverlay = (id & OVERLAY_FLAG) != 0;
+					break outer;
 				}
 			}
 		}
 
 		for (var entry : anyMatchOverrides) {
-			var area = entry.getKey();
 			var override = entry.getValue();
 			if (override.index > match.index)
 				break;
+			var area = entry.getKey();
 			if (area.containsPoint(worldPos)) {
 				match = override;
 				break;
@@ -296,6 +294,8 @@ public class TileOverrideManager {
 					return replacement;
 				}
 			}
+			// Avoid accidentally keeping the old scene in memory
+			hslVars.setTile(null);
 		}
 
 		return override;

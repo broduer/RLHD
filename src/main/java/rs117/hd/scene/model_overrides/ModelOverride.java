@@ -13,10 +13,10 @@ import rs117.hd.config.SeasonalTheme;
 import rs117.hd.config.VanillaShadowMode;
 import rs117.hd.data.materials.Material;
 import rs117.hd.data.materials.UvType;
-import rs117.hd.utils.AABB;
+import rs117.hd.scene.areas.AABB;
 import rs117.hd.utils.GsonUtils;
-import rs117.hd.utils.HDUtils;
 import rs117.hd.utils.Props;
+import rs117.hd.utils.Vector;
 
 import static net.runelite.api.Perspective.*;
 
@@ -60,6 +60,7 @@ public class ModelOverride
 	public boolean upwardsNormals = false;
 	public boolean hideVanillaShadows = false;
 	public boolean retainVanillaShadowsInPvm = false;
+	public boolean hideHdShadowsInPvm = false;
 	public boolean castShadows = true;
 	public boolean receiveShadows = true;
 	public float shadowOpacityThreshold = 0;
@@ -130,7 +131,7 @@ public class ModelOverride
 		if (retainVanillaShadowsInPvm) {
 			if (vanillaShadowMode.retainInPvm)
 				hideVanillaShadows = false;
-			if (vanillaShadowMode == VanillaShadowMode.PREFER_IN_PVM)
+			if (vanillaShadowMode == VanillaShadowMode.PREFER_IN_PVM && hideHdShadowsInPvm)
 				castShadows = false;
 		}
 
@@ -163,6 +164,7 @@ public class ModelOverride
 			upwardsNormals,
 			hideVanillaShadows,
 			retainVanillaShadowsInPvm,
+			hideHdShadowsInPvm,
 			castShadows,
 			receiveShadows,
 			shadowOpacityThreshold,
@@ -231,9 +233,9 @@ public class ModelOverride
 			case MODEL_YZ:
 			case MODEL_YZ_MIRROR_A:
 			case MODEL_YZ_MIRROR_B: {
-				final int[] vertexX = model.getVerticesX();
-				final int[] vertexY = model.getVerticesY();
-				final int[] vertexZ = model.getVerticesZ();
+				final float[] vertexX = model.getVerticesX();
+				final float[] vertexY = model.getVerticesY();
+				final float[] vertexZ = model.getVerticesZ();
 				final int triA = model.getFaceIndices1()[face];
 				final int triB = model.getFaceIndices2()[face];
 				final int triC = model.getFaceIndices3()[face];
@@ -252,9 +254,9 @@ public class ModelOverride
 				if (texFace != -1) {
 					texFace &= 0xff;
 
-					final int[] vertexX = model.getVerticesX();
-					final int[] vertexY = model.getVerticesY();
-					final int[] vertexZ = model.getVerticesZ();
+					final float[] vertexX = model.getVerticesX();
+					final float[] vertexY = model.getVerticesY();
+					final float[] vertexZ = model.getVerticesZ();
 					final int texA = model.getTexIndices1()[texFace];
 					final int texB = model.getTexIndices2()[texFace];
 					final int texC = model.getTexIndices3()[texFace];
@@ -287,7 +289,7 @@ public class ModelOverride
 	}
 
 	private void computeBoxUvw(float[] out, Model model, int modelOrientation, int face) {
-		final int[][] vertexXYZ = {
+		final float[][] vertexXYZ = {
 			model.getVerticesX(),
 			model.getVerticesY(),
 			model.getVerticesZ()
@@ -327,11 +329,12 @@ public class ModelOverride
 		// Compute face normal
 		float[] a = new float[3];
 		float[] b = new float[3];
-		HDUtils.subtract(a, v[1], v[0]);
-		HDUtils.subtract(b, v[2], v[0]);
+		Vector.subtract(a, v[1], v[0]);
+		Vector.subtract(b, v[2], v[0]);
 		float[] n = new float[3];
-		HDUtils.cross(n, a, b);
-		float[] absN = HDUtils.abs(a, n);
+		Vector.cross(n, a, b);
+		float[] absN = new float[3];
+		Vector.abs(absN, n);
 
 		out[2] = out[6] = out[10] = 0;
 		if (absN[0] > absN[1] && absN[0] > absN[2]) {

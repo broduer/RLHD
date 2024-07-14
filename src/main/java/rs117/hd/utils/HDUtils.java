@@ -30,7 +30,8 @@ import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.coords.*;
-import rs117.hd.data.environments.Area;
+import rs117.hd.scene.areas.AABB;
+import rs117.hd.scene.areas.Area;
 
 import static net.runelite.api.Constants.SCENE_SIZE;
 import static net.runelite.api.Constants.*;
@@ -55,57 +56,12 @@ public class HDUtils {
 	public static final float HALF_PI = PI / 2;
 	public static final float QUARTER_PI = PI / 2;
 
+	public static final float MAX_FLOAT_WITH_128TH_PRECISION = 1 << 16;
+
 	public static final int MAX_SNOW_LIGHTNESS = 70;
 
 	// directional vectors approximately opposite of the directional light used by the client
 	private static final float[] LIGHT_DIR_TILE = new float[] { 0.70710678f, 0.70710678f, 0f };
-
-	/**
-	 * Computes a + b, storing it in the out array
-	 */
-	public static float[] add(float[] out, float[] a, float[] b) {
-		for (int i = 0; i < out.length; i++)
-			out[i] = a[i] + b[i];
-		return out;
-	}
-
-	/**
-	 * Computes a - b, storing it in the out array
-	 */
-	public static float[] subtract(float[] out, float[] a, float[] b) {
-		for (int i = 0; i < out.length; i++)
-			out[i] = a[i] - b[i];
-		return out;
-	}
-
-	public static float[] cross(float[] out, float[] a, float[] b) {
-		out[0] = a[1] * b[2] - a[2] * b[1];
-		out[1] = a[2] * b[0] - a[0] * b[2];
-		out[2] = a[0] * b[1] - a[1] * b[0];
-		return out;
-	}
-
-	public static float length(float... vector) {
-		float lengthSquared = 0;
-		for (float v : vector)
-			lengthSquared += v * v;
-		return (float) Math.sqrt(lengthSquared);
-	}
-
-	public static void normalize(float[] vector) {
-		float length = length(vector);
-		if (length == 0)
-			return;
-		length = 1 / length;
-		for (int i = 0; i < vector.length; i++)
-			vector[i] *= length;
-	}
-
-	public static float[] abs(float[] out, float[] v) {
-		for (int i = 0; i < out.length; i++)
-			out[i] = Math.abs(v[i]);
-		return out;
-	}
 
 	public static float min(float... v) {
 		float min = v[0];
@@ -182,7 +138,7 @@ public class HDUtils {
 	 * Modulo that returns the answer with the same sign as the modulus.
 	 */
 	public static int mod(int x, int modulus) {
-		return x - (x / modulus) * modulus;
+		return ((x % modulus) + modulus) % modulus;
 	}
 
 	public static float clamp(float value, float min, float max) {
@@ -191,6 +147,10 @@ public class HDUtils {
 
 	public static int clamp(int value, int min, int max) {
 		return Math.min(Math.max(value, min), max);
+	}
+
+	public static double log2(double x) {
+		return Math.log(x) / Math.log(2);
 	}
 
 	public static int vertexHash(int[] vPos) {
@@ -202,10 +162,10 @@ public class HDUtils {
 	}
 
 	public static float[] calculateSurfaceNormals(float[] a, float[] b, float[] c) {
-		subtract(b, a, b);
-		subtract(c, a, c);
+		Vector.subtract(b, a, b);
+		Vector.subtract(c, a, c);
 		float[] n = new float[3];
-		return cross(n, b, c);
+		return Vector.cross(n, b, c);
 	}
 
 	public static float dotLightDirectionTile(float x, float y, float z) {
@@ -350,13 +310,6 @@ public class HDUtils {
 		return new WorldPoint(baseX, baseY, plane);
 	}
 
-	public static int[] cameraSpaceToWorldPoint(Client client, int relativeX, int relativeZ) {
-		int localX = client.getCameraX2() + relativeX;
-		int localY = client.getCameraZ2() + relativeZ;
-		int plane = client.getPlane();
-		return localToWorld(client.getScene(), localX, localY, plane);
-	}
-
 	/**
 	 * The returned plane may be different, so it's not safe to use for indexing into overlay IDs for instance
 	 */
@@ -463,7 +416,7 @@ public class HDUtils {
 		var paint = tile.getSceneTilePaint();
 		var model = tile.getSceneTileModel();
 		if (paint != null) {
-			ColorUtils.unpackHslRaw(out, paint.getSwColor());
+			ColorUtils.unpackRawHsl(out, paint.getSwColor());
 		} else if (model != null) {
 			int faceCount = tile.getSceneTileModel().getFaceX().length;
 			final int[] faceColorsA = model.getTriangleColorA();
@@ -486,7 +439,7 @@ public class HDUtils {
 				}
 			}
 
-			ColorUtils.unpackHslRaw(out, hsl);
+			ColorUtils.unpackRawHsl(out, hsl);
 		}
 	}
 }

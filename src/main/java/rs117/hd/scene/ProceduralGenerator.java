@@ -43,12 +43,12 @@ import static net.runelite.api.Constants.*;
 import static net.runelite.api.Perspective.*;
 import static rs117.hd.scene.SceneUploader.SCENE_OFFSET;
 import static rs117.hd.scene.tile_overrides.TileOverride.OVERLAY_FLAG;
-import static rs117.hd.utils.HDUtils.add;
 import static rs117.hd.utils.HDUtils.calculateSurfaceNormals;
 import static rs117.hd.utils.HDUtils.clamp;
 import static rs117.hd.utils.HDUtils.dotLightDirectionTile;
 import static rs117.hd.utils.HDUtils.lerp;
 import static rs117.hd.utils.HDUtils.vertexHash;
+import static rs117.hd.utils.Vector.add;
 
 @Slf4j
 @Singleton
@@ -607,18 +607,8 @@ public class ProceduralGenerator {
 					{
 						continue;
 					}
-					int maxRange = DEPTH_LEVEL_SLOPE[sceneContext.underwaterDepthLevels[z][x][y] - 1];
-					int minRange = (int) (DEPTH_LEVEL_SLOPE[sceneContext.underwaterDepthLevels[z][x][y] - 1] * 0.1f);
-					// Range from noise-generated terrain is 10-60.
-					// Translate the result from range 0-1.
-//					float noiseOffset = (HeightCalc.calculate(baseX + x + 0xe3b7b, baseY + y + 0x87cce) - 10) / 50f;
-					float noiseOffset = 0.5f;
-					// limit range of variation
-					float minOffset = 0.25f;
-					float maxOffset = 0.75f;
-					noiseOffset = lerp(minOffset, maxOffset, noiseOffset);
-					// apply offset to vertex height range
-					int heightOffset = (int) lerp(minRange, maxRange, noiseOffset);
+					int depth = DEPTH_LEVEL_SLOPE[sceneContext.underwaterDepthLevels[z][x][y] - 1];
+					int heightOffset = (int) (depth * .55f); // legacy weirdness
 					underwaterDepths[z][x][y] = heightOffset;
 				}
 			}
@@ -1036,14 +1026,14 @@ public class ProceduralGenerator {
 			final int triA = model.getFaceIndices1()[face];
 			final int triB = model.getFaceIndices2()[face];
 			final int triC = model.getFaceIndices3()[face];
-			final int[] yVertices = model.getVerticesY();
-			int heightA = yVertices[triA];
-			int heightB = yVertices[triB];
-			int heightC = yVertices[triC];
+			final float[] yVertices = model.getVerticesY();
+			float heightA = yVertices[triA];
+			float heightB = yVertices[triB];
+			float heightC = yVertices[triC];
 
 			// apply coloring to the rocky walls
 			if (color1L < 20) {
-				float pos = clamp((float) (heightA - gradientTop) / (float) gradientBottom, 0.0f, 1.0f);
+				float pos = clamp((heightA - gradientTop) / (float) gradientBottom, 0.0f, 1.0f);
 				color1H = (int) lerp(gradientDarkColor[0], gradientBaseColor[0], pos);
 				color1S = (int) lerp(gradientDarkColor[1], gradientBaseColor[1], pos);
 				color1L = (int) lerp(gradientDarkColor[2], gradientBaseColor[2], pos);
@@ -1051,7 +1041,7 @@ public class ProceduralGenerator {
 
 			if (color2L < 20)
 			{
-				float pos = clamp((float) (heightB - gradientTop) / (float) gradientBottom, 0.0f, 1.0f);
+				float pos = clamp((heightB - gradientTop) / (float) gradientBottom, 0.0f, 1.0f);
 				color2H = (int) lerp(gradientDarkColor[0], gradientBaseColor[0], pos);
 				color2S = (int) lerp(gradientDarkColor[1], gradientBaseColor[1], pos);
 				color2L = (int) lerp(gradientDarkColor[2], gradientBaseColor[2], pos);
@@ -1059,7 +1049,7 @@ public class ProceduralGenerator {
 
 			if (color3L < 20)
 			{
-				float pos = clamp((float) (heightC - gradientTop) / (float) gradientBottom, 0.0f, 1.0f);
+				float pos = clamp((heightC - gradientTop) / (float) gradientBottom, 0.0f, 1.0f);
 				color3H = (int) lerp(gradientDarkColor[0], gradientBaseColor[0], pos);
 				color3S = (int) lerp(gradientDarkColor[1], gradientBaseColor[1], pos);
 				color3L = (int) lerp(gradientDarkColor[2], gradientBaseColor[2], pos);

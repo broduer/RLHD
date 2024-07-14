@@ -125,6 +125,10 @@
         "type": "boolean",
         "description": "Whether flat normals should be used instead of smooth normals. Defaults to false."
       },
+      "upwardsNormals": {
+        "type": "boolean",
+        "description": "Whether normals should always point directly up. Defaults to false."
+      },
       "hideVanillaShadows": {
         "type": "boolean",
         "description": "Whether the model has fake shadows which should be removed. Defaults to false."
@@ -132,6 +136,10 @@
       "retainVanillaShadowsInPvm": {
         "type": "boolean",
         "description": "Whether the model has fake shadows which are potentially useful for PvM. Defaults to false."
+      },
+      "hideHdShadowsInPvm": {
+        "type": "boolean",
+        "description": "Whether shadow casting should be disabled when Vanilla Shadows is set to 'Prefer in PvM'. Defaults to false."
       },
       "castShadows": {
         "type": "boolean",
