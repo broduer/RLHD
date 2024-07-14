@@ -15,6 +15,14 @@ public class EditorUtils {
 		return (boolean) value;
 	}
 
+	public static float[] castToFloatArray(Object value) {
+		String floatString = (String) value;
+
+		// Split the string at the comma
+		String[] floatStrings = floatString.split(",");
+
+		return new float[] { Integer.valueOf(floatStrings[0]), Integer.valueOf(floatStrings[1]) };
+	}
 	public static float castToFloat(Object value) {
 		return (float) value;
 	}

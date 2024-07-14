@@ -195,6 +195,17 @@ public class HDUtils {
 		return new float[] { (float) Math.toRadians(altitude), (float) Math.toRadians(azimuth) };
 	}
 
+	public static int[] reverseSunAngles(float[] anglesInRadians) {
+		if (anglesInRadians.length != 2) {
+			throw new IllegalArgumentException("The input array must have exactly two elements.");
+		}
+
+		return new int[] {
+			(int) Math.toDegrees(anglesInRadians[0]),
+			(int) Math.toDegrees(anglesInRadians[1])
+		};
+	}
+
 	public static int convertWallObjectOrientation(int orientation) {
 		// Note: this is still imperfect, since the model rotation of a wall object depends on more than just the config orientation,
 		// 		 i.e. extra rotation depending on wall type whatever. I'm not sure.

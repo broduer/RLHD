@@ -3,9 +3,8 @@ package rs117.hd.tooling.enviroment;
 import com.google.inject.Inject;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -22,16 +21,18 @@ import net.runelite.client.ui.components.colorpicker.ColorPickerManager;
 import net.runelite.client.ui.components.colorpicker.RuneliteColorPicker;
 import net.runelite.client.ui.components.materialtabs.MaterialTab;
 import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
-import rs117.hd.HdPlugin;
 import rs117.hd.scene.EnvironmentManager;
 import rs117.hd.scene.environments.Environment;
 import rs117.hd.tooling.enviroment.impl.EditorPanel;
+import rs117.hd.utils.HDUtils;
 
 import static rs117.hd.tooling.enviroment.EditorUtils.castToBoolean;
 import static rs117.hd.tooling.enviroment.EditorUtils.castToColor;
 import static rs117.hd.tooling.enviroment.EditorUtils.castToFloat;
+import static rs117.hd.tooling.enviroment.EditorUtils.castToFloatArray;
 import static rs117.hd.tooling.enviroment.EditorUtils.castToInt;
 import static rs117.hd.tooling.enviroment.EditorUtils.getColorValue;
+import static rs117.hd.utils.HDUtils.reverseSunAngles;
 
 @Slf4j
 public class EnvironmentEditor extends JFrame {
@@ -141,9 +142,9 @@ public class EnvironmentEditor extends JFrame {
 		// Other environmental effects
 		put("sunAngles", new PropertyData(
 			"The sun's altitude and azimuth specified in degrees in the horizontal coordinate system.",
-			boolean.class,
-			(env, val) -> env.lightningEffects = castToBoolean(val),
-			env -> String.valueOf(env.lightningEffects)
+			int[].class,
+			(env, val) -> env.sunAngles = HDUtils.sunAngles(castToFloatArray(val)[0],castToFloatArray(val)[1]),
+			env -> Arrays.toString(reverseSunAngles(env.sunAngles ==  null ? HDUtils.sunAngles(52, 235) : env.sunAngles))
 		));
 		put("fogColor", new PropertyData(
 			"Sky/fog color in sRGB, specified as a hex color code or an array.",

@@ -8,6 +8,7 @@ import rs117.hd.scene.environments.Environment;
 import rs117.hd.tooling.enviroment.components.ComponentData;
 import rs117.hd.tooling.enviroment.components.impl.ColorPicker;
 import rs117.hd.tooling.enviroment.components.impl.FloatSpinner;
+import rs117.hd.tooling.enviroment.components.impl.IntArraySpinner;
 import rs117.hd.tooling.enviroment.components.impl.IntSpinner;
 
 @Data
@@ -31,6 +32,8 @@ public class PropertyData {
 			componentData = new IntSpinner();
 		} else if (getObject() == Color.class) {
 			componentData = new ColorPicker();
+		} else if (getObject() == int[].class) {
+			componentData = new IntArraySpinner();
 		}
 	}
 
