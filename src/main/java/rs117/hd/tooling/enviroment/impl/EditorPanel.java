@@ -25,8 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.ui.ColorScheme;
-import rs117.hd.data.environments.Area;
 import rs117.hd.scene.EnvironmentManager;
+import rs117.hd.scene.areas.Area;
 import rs117.hd.scene.environments.Environment;
 import rs117.hd.tooling.enviroment.EnvironmentEditor;
 import rs117.hd.tooling.enviroment.EnvironmentSerializer;
@@ -72,7 +72,7 @@ public class EditorPanel extends JPanel {
 		{
 			String selectedNode = e.getPath().getLastPathComponent().toString().toUpperCase().replace(" ", "_");
 
-			Environment matchingEnvironment = Arrays.stream(environmentManager.environments)
+			Environment matchingEnvironment = Arrays.stream(environmentManager.getEnvironments())
 				.filter(environment -> environment.toString().equals(selectedNode))
 				.findFirst()
 				.orElse(Environment.DEFAULT);
@@ -201,7 +201,7 @@ public class EditorPanel extends JPanel {
 				.create();
 
 			path("src/main/resources/rs117/hd/scene/environments.json")
-				.writeString(gson.toJson(environmentManager.environments));
+				.writeString(gson.toJson(environmentManager.getEnvironments()));
 		} catch (Exception e) {
 
 		}
@@ -221,7 +221,7 @@ public class EditorPanel extends JPanel {
 			parent.add(node);
 		}
 
-		List<Environment> environments = Arrays.stream(environmentManager.environments)
+		List<Environment> environments = Arrays.stream(environmentManager.getEnvironments())
 			.filter(env -> env.area != null && (underground != Area.OVERWORLD.intersects(env.area)))
 			.collect(Collectors.toList());
 

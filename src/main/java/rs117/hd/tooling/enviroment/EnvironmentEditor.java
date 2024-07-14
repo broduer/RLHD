@@ -71,6 +71,13 @@ public class EnvironmentEditor extends JFrame {
 			env -> String.valueOf(env.lightningEffects)
 		));
 
+		put("instantTransition", new PropertyData(
+			"Enables instant Transitions.",
+			boolean.class,
+			(env, val) -> env.instantTransition = castToBoolean(val),
+			env -> String.valueOf(env.instantTransition)
+		));
+
 		// Light properties
 		put("ambientColor", new PropertyData(
 			"Ambient light color in sRGB, specified as a hex color code or an array.",
@@ -237,9 +244,9 @@ public class EnvironmentEditor extends JFrame {
 	}
 
 	private Environment findEnvironmentByName(String name) {
-		for (int i = 0; i < environmentManager.environments.length; i++) {
-			if (Objects.equals(environmentManager.environments[i].name(), name)) {
-				return environmentManager.environments[i];
+		for (int i = 0; i < environmentManager.getEnvironments().length; i++) {
+			if (Objects.equals(environmentManager.getEnvironments()[i].name(), name)) {
+				return environmentManager.getEnvironments()[i];
 			}
 		}
 		return null;

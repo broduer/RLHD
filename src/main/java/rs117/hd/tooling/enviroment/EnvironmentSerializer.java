@@ -8,8 +8,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 import java.util.Arrays;
-import java.util.Objects;
-import rs117.hd.data.environments.Area;
+import rs117.hd.scene.areas.Area;
 import rs117.hd.scene.environments.Environment;
 import rs117.hd.utils.ColorUtils;
 
@@ -42,6 +41,9 @@ public class EnvironmentSerializer implements JsonSerializer<Environment> {
 			}
 			if (src.lightningEffects) {
 				jsonObject.addProperty("lightningEffects", true);
+			}
+			if (src.instantTransition) {
+				jsonObject.addProperty("instantTransition", true);
 			}
 
 			// Serialize array fields only if they are not null and not equal to default values
