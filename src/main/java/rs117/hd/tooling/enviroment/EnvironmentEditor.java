@@ -22,8 +22,11 @@ import net.runelite.client.ui.components.colorpicker.RuneliteColorPicker;
 import net.runelite.client.ui.components.materialtabs.MaterialTab;
 import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
 import rs117.hd.scene.EnvironmentManager;
+import rs117.hd.scene.GroundMaterialManager;
+import rs117.hd.scene.TextureManager;
 import rs117.hd.scene.environments.Environment;
 import rs117.hd.tooling.enviroment.impl.EditorPanel;
+import rs117.hd.tooling.enviroment.impl.GroundMaterialsPanel;
 import rs117.hd.utils.HDUtils;
 
 import static rs117.hd.tooling.enviroment.EditorUtils.castToBoolean;
@@ -47,7 +50,15 @@ public class EnvironmentEditor extends JFrame {
 	@Inject
 	private Client client;
 
+	@Inject
+	private TextureManager textureManager;
+
+	@Inject
+	private GroundMaterialManager groundMaterialManager;
+
 	private JPanel editorContent = new JPanel();
+
+	private JPanel groundMaterialPanel = new JPanel();
 
 	public RuneliteColorPicker colorPicker;
 
@@ -199,11 +210,12 @@ public class EnvironmentEditor extends JFrame {
 				Color.BLUE, "Editor", false
 			);
 			editorContent = new EditorPanel(clientThread, client, environmentManager, this);
+			groundMaterialPanel = new GroundMaterialsPanel(clientThread, client, environmentManager, this,textureManager,groundMaterialManager);
 
 			JPanel display = new JPanel();
 			MaterialTabGroup tabGroup = new MaterialTabGroup(display);
 			MaterialTab editorTab = new MaterialTab("Environment Editor", tabGroup, editorContent);
-			MaterialTab searchTab = new MaterialTab("Create Environment", tabGroup, new JPanel());
+			MaterialTab searchTab = new MaterialTab("Ground Materials Editor", tabGroup, groundMaterialPanel);
 
 			tabGroup.setBorder(new EmptyBorder(5, 0, 0, 0));
 			tabGroup.addTab(editorTab);

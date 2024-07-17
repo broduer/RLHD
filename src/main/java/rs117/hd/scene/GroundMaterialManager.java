@@ -45,17 +45,39 @@ public class GroundMaterialManager {
 				System.arraycopy(groundMaterials, 0, GROUND_MATERIALS, 2, groundMaterials.length);
 
 				if (!first) {
-					clientThread.invoke(() -> {
-						// Reload everything which depends on ground materials
-						tileOverrideManager.shutDown();
-						tileOverrideManager.startUp();
-						plugin.reuploadScene();
-					});
+					clientThread.invoke(this::reload);
 				}
 			} catch (IOException ex) {
 				log.error("Failed to load ground materials:", ex);
 			}
 		});
+	}
+
+	public void reload() {
+		clientThread.invoke(() -> {
+			// Reload everything which depends on ground materials
+			tileOverrideManager.shutDown();
+			tileOverrideManager.startUp();
+			plugin.reuploadScene();
+		});
+	}
+
+	public static int lookupIndex(String name) {
+		for (int i = 0; i < GROUND_MATERIALS.length; i++) {
+			if (GROUND_MATERIALS[i].getName().equalsIgnoreCase(name)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	public static GroundMaterial lookup(String name) {
+		for (GroundMaterial groundMaterial : GROUND_MATERIALS) {
+			if (groundMaterial.getName().equalsIgnoreCase(name)) {
+				return groundMaterial;
+			}
+		}
+		return GroundMaterial.NONE;
 	}
 
 	public void shutDown() {

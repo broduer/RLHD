@@ -342,7 +342,7 @@ public class TextureManager {
 		glActiveTexture(TEXTURE_UNIT_UI);
 	}
 
-	private BufferedImage loadTextureImage(Material material) {
+	public BufferedImage loadTextureImage(Material material) {
 		String textureName = material.name().toLowerCase();
 		for (String ext : SUPPORTED_IMAGE_EXTENSIONS) {
 			ResourcePath path = TEXTURE_PATH.resolve(textureName + "." + ext);
