@@ -302,9 +302,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		.add(GL_FRAGMENT_SHADER, "fragui.glsl");
 
 	private static final Shader PARTICLES = new Shader()
-		.add(GL_VERTEX_SHADER, "particles_vert.glsl")
-		.add(GL_GEOMETRY_SHADER, "particles_geom.glsl")
-		.add(GL_FRAGMENT_SHADER, "particles_frag.glsl");
+		.add(GL_VERTEX_SHADER, "particle_vert.glsl")
+		.add(GL_GEOMETRY_SHADER, "particle_geom.glsl")
+		.add(GL_FRAGMENT_SHADER, "particle_frag.glsl");
 	private static final ResourcePath SHADER_PATH = Props
 		.getPathOrDefault("rlhd.shader-path", () -> path(HdPlugin.class))
 		.chroot();
@@ -314,7 +314,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 	public int glShadowProgram;
 	public int glModelPassthroughComputeProgram;
 	public int[] glModelSortingComputePrograms = {};
-
+	public int glParticleProgram;
 	private int interfaceTexture;
 	private int interfacePbo;
 
@@ -871,6 +871,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 
 		glSceneProgram = PROGRAM.compile(template);
 		glUiProgram = UI_PROGRAM.compile(template);
+		glParticleProgram = PARTICLES.compile(template);
 
 		switch (configShadowMode) {
 			case FAST:
@@ -1140,6 +1141,10 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		// texture coord attribute
 		glVertexAttribPointer(1, 2, GL_FLOAT, false, 5 * Float.BYTES, 3 * Float.BYTES);
 		glEnableVertexAttribArray(1);
+
+		// particle position attribute
+		glVertexAttribPointer(4, 3, GL_FLOAT, false, 5 * Float.BYTES, 0);
+		glEnableVertexAttribArray(4);
 	}
 
 	private void updateSceneVao(GLBuffer vertexBuffer, GLBuffer uvBuffer, GLBuffer normalBuffer, GLBuffer particleBuffer) {
@@ -1167,7 +1172,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 
 		glEnableVertexAttribArray(5);
 		glBindBuffer(GL_ARRAY_BUFFER, particleBuffer.glBufferId);
-		glVertexAttribPointer(5, 1, GL_INT, false, 16, 12);
+		glVertexAttribIPointer(5, 1, GL_INT, 16, 12);
 	}
 
 	private void destroyVaos() {
