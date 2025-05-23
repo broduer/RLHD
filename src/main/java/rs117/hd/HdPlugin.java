@@ -323,6 +323,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 
 	private int vaoSceneHandle;
 	private int fboSceneHandle;
+	private int vaoParticles;
 	private int rboSceneColorHandle;
 	private int rboSceneDepthHandle;
 
@@ -434,7 +435,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 	private int uniUiAlphaOverlay;
 	private int uniTextureArray;
 	private int uniElapsedTime;
-
+	private int uniParticleProjectionMatrix;
 	private int uniBlockMaterials;
 	private int uniBlockWaterTypes;
 	private int uniBlockPointLights;
@@ -959,7 +960,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		uniCameraPos = glGetUniformLocation(glSceneProgram, "cameraPos");
 		uniTextureArray = glGetUniformLocation(glSceneProgram, "textureArray");
 		uniElapsedTime = glGetUniformLocation(glSceneProgram, "elapsedTime");
-
+		uniParticleProjectionMatrix = glGetUniformLocation(glSceneProgram, "particleProjectionMatrix");
 		if (configColorFilter != ColorFilter.NONE) {
 			uniColorFilter = glGetUniformLocation(glSceneProgram, "colorFilter");
 			uniColorFilterPrevious = glGetUniformLocation(glSceneProgram, "colorFilterPrevious");
@@ -1115,7 +1116,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 	private void initVaos() {
 		// Create scene VAO
 		vaoSceneHandle = glGenVertexArrays();
-
+		// Create Particle VAO
+		vaoParticles = glGenVertexArrays();
 		// Create UI VAO
 		vaoUiHandle = glGenVertexArrays();
 		// Create UI buffer
@@ -1166,6 +1168,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		glBindBuffer(GL_ARRAY_BUFFER, normalBuffer.glBufferId);
 		glVertexAttribPointer(3, 4, GL_FLOAT, false, 0, 0);
 
+		glBindVertexArray(0);
+
+		glBindVertexArray(vaoParticles);
 		glEnableVertexAttribArray(4);
 		glBindBuffer(GL_ARRAY_BUFFER, particleBuffer.glBufferId);
 		glVertexAttribPointer(4, 3, GL_FLOAT, false, 16, 0);
@@ -1173,6 +1178,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		glEnableVertexAttribArray(5);
 		glBindBuffer(GL_ARRAY_BUFFER, particleBuffer.glBufferId);
 		glVertexAttribIPointer(5, 1, GL_INT, 16, 12);
+		glBindVertexArray(0);
 	}
 
 	private void destroyVaos() {
@@ -1187,6 +1193,10 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		if (vaoUiHandle != 0)
 			glDeleteVertexArrays(vaoUiHandle);
 		vaoUiHandle = 0;
+
+		if (vaoParticles != 0)
+			glDeleteVertexArrays(vaoParticles);
+		vaoParticles = 0;
 	}
 
 	private void initBuffers() {
@@ -2291,6 +2301,13 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 			glDisable(GL_MULTISAMPLE);
 			glDisable(GL_DEPTH_TEST);
 			glDepthMask(true);
+			glUseProgram(0);
+			
+			//draw nothing for now
+			glUseProgram(glParticleProgram);
+			glUniformMatrix4fv(uniParticleProjectionMatrix, false, projectionMatrix);
+			glBindVertexArray(vaoParticles);
+			glDrawArrays(GL_POINTS, 0, renderBufferOffset);
 			glUseProgram(0);
 
 			// Blit from the scene FBO to the default FBO
