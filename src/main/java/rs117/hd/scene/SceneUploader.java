@@ -727,7 +727,13 @@ public class SceneUploader {
 			sceneContext.stagingBufferVertices.put((float) localNwVertexX, nwHeight, localNwVertexY, nwColor);
 
 			sceneContext.stagingBufferParticles.ensureCapacity(24);
+			sceneContext.stagingBufferParticles.put((float) localNeVertexX, neHeight, localNeVertexY, neColor);
+			sceneContext.stagingBufferParticles.put((float) localNwVertexX, nwHeight, localNwVertexY, nwColor);
+			sceneContext.stagingBufferParticles.put((float) localSeVertexX, seHeight, localSeVertexY, seColor);
 
+			sceneContext.stagingBufferParticles.put((float) localSwVertexX, swHeight, localSwVertexY, swColor);
+			sceneContext.stagingBufferParticles.put((float) localSeVertexX, seHeight, localSeVertexY, seColor);
+			sceneContext.stagingBufferParticles.put((float) localNwVertexX, nwHeight, localNwVertexY, nwColor);
 			bufferLength += 6;
 
 
@@ -867,6 +873,13 @@ public class SceneUploader {
 			sceneContext.stagingBufferVertices.put((float) localNwVertexX, nwHeight + nwDepth, localNwVertexY, nwColor);
 
 			sceneContext.stagingBufferParticles.ensureCapacity(24);
+			sceneContext.stagingBufferParticles.put((float) localNeVertexX, neHeight + neDepth, localNeVertexY, neColor);
+			sceneContext.stagingBufferParticles.put((float) localNwVertexX, nwHeight + nwDepth, localNwVertexY, nwColor);
+			sceneContext.stagingBufferParticles.put((float) localSeVertexX, seHeight + seDepth, localSeVertexY, seColor);
+
+			sceneContext.stagingBufferParticles.put((float) localSwVertexX, swHeight + swDepth, localSwVertexY, swColor);
+			sceneContext.stagingBufferParticles.put((float) localSeVertexX, seHeight + seDepth, localSeVertexY, seColor);
+			sceneContext.stagingBufferParticles.put((float) localNwVertexX, nwHeight + nwDepth, localNwVertexY, nwColor);
 
 			bufferLength += 6;
 
@@ -1081,6 +1094,9 @@ public class SceneUploader {
 			sceneContext.stagingBufferVertices.put((float) localVertices[2][0], localVertices[2][2], localVertices[2][1], colorC);
 
 			sceneContext.stagingBufferParticles.ensureCapacity(12);
+			sceneContext.stagingBufferParticles.put((float) localVertices[0][0], localVertices[0][2], localVertices[0][1], colorA);
+			sceneContext.stagingBufferParticles.put((float) localVertices[1][0], localVertices[1][2], localVertices[1][1], colorB);
+			sceneContext.stagingBufferParticles.put((float) localVertices[2][0], localVertices[2][2], localVertices[2][1], colorC);
 
 			bufferLength += 3;
 
@@ -1231,7 +1247,24 @@ public class SceneUploader {
 				);
 
 				sceneContext.stagingBufferParticles.ensureCapacity(12);
-
+				sceneContext.stagingBufferParticles.put(
+					(float) localVertices[0][0],
+					localVertices[0][2] + depthA,
+					localVertices[0][1],
+					colorA
+				);
+				sceneContext.stagingBufferParticles.put(
+					(float) localVertices[1][0],
+					localVertices[1][2] + depthB,
+					localVertices[1][1],
+					colorB
+				);
+				sceneContext.stagingBufferParticles.put(
+					(float) localVertices[2][0],
+					localVertices[2][2] + depthC,
+					localVertices[2][1],
+					colorC
+				);
 				bufferLength += 3;
 
 				int packedMaterialDataA = modelPusher.packMaterialData(
@@ -1289,6 +1322,13 @@ public class SceneUploader {
 		sceneContext.stagingBufferVertices.put(fromX, nwHeight, toY, color);
 
 		sceneContext.stagingBufferParticles.ensureCapacity(24);
+		sceneContext.stagingBufferParticles.put(toX, neHeight, toY, color);
+		sceneContext.stagingBufferParticles.put(fromX, nwHeight, toY, color);
+		sceneContext.stagingBufferParticles.put(toX, seHeight, fromY, color);
+
+		sceneContext.stagingBufferParticles.put(fromX, swHeight, fromY, color);
+		sceneContext.stagingBufferParticles.put(toX, seHeight, fromY, color);
+		sceneContext.stagingBufferParticles.put(fromX, nwHeight, toY, color);
 
 		int packedMaterialData = modelPusher.packMaterialData(Material.BLACK, -1, ModelOverride.NONE, UvType.GEOMETRY, false);
 

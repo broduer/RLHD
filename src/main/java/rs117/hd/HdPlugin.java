@@ -369,6 +369,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 
 	private int dynamicOffsetVertices;
 	private int dynamicOffsetUvs;
+	private int dynamicOffsetParticles;
 	private int renderBufferOffset;
 
 	private int lastCanvasWidth;
@@ -1704,7 +1705,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 			updateBuffer(
 				hStagingBufferParticles,
 				GL_ARRAY_BUFFER,
-				dynamicOffsetVertices * VERTEX_SIZE,
+				dynamicOffsetParticles * VERTEX_SIZE,
 				sceneContext.stagingBufferParticles.getBuffer(),
 				GL_STREAM_DRAW, CL_MEM_READ_ONLY
 			);
@@ -2302,12 +2303,14 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 			glDisable(GL_DEPTH_TEST);
 			glDepthMask(true);
 			glUseProgram(0);
-			
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, awtContext.getFramebuffer(false));
 			//draw nothing for now
 			glUseProgram(glParticleProgram);
 			glUniformMatrix4fv(uniParticleProjectionMatrix, false, projectionMatrix);
 			glBindVertexArray(vaoParticles);
-			glDrawArrays(GL_POINTS, 0, renderBufferOffset);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			glDrawArrays(GL_TRIANGLES, 0, renderBufferOffset);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			glUseProgram(0);
 
 			// Blit from the scene FBO to the default FBO
@@ -2561,7 +2564,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 
 		dynamicOffsetVertices = sceneContext.getVertexOffset();
 		dynamicOffsetUvs = sceneContext.getUvOffset();
-
+		dynamicOffsetParticles = sceneContext.getParticleOffset();
 		sceneContext.stagingBufferVertices.flip();
 		sceneContext.stagingBufferUvs.flip();
 		sceneContext.stagingBufferNormals.flip();
@@ -3167,6 +3170,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 
 				int vertexOffset = dynamicOffsetVertices + sceneContext.getVertexOffset();
 				int uvOffset = dynamicOffsetUvs + sceneContext.getUvOffset();
+				int particleOffset = dynamicOffsetParticles + sceneContext.getParticleOffset();
 
 				int preOrientation = 0;
 				if (ModelHash.getType(hash) == ModelHash.TYPE_OBJECT) {

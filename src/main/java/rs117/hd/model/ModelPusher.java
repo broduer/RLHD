@@ -298,6 +298,8 @@ public class ModelPusher {
 			for (int face = 0; face < faceCount; face++) {
 				int[] data = getFaceVertices(sceneContext, tile, uuid, model, modelOverride, face);
 				sceneContext.stagingBufferVertices.put(data);
+				sceneContext.stagingBufferParticles.put(data);
+
 				if (shouldCacheVertexData)
 					fullVertexData.put(data);
 			}

@@ -149,6 +149,10 @@ public class SceneContext {
 		return stagingBufferVertices.position() / VERTEX_SIZE;
 	}
 
+	public int getParticleOffset() {
+		return stagingBufferParticles.position() / VERTEX_SIZE;
+	}
+
 	public int getUvOffset() {
 		return stagingBufferUvs.position() / UV_SIZE;
 	}
