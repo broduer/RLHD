@@ -205,6 +205,7 @@ public class ModelPusher {
 		// ensure capacity upfront
 		sceneContext.stagingBufferVertices.ensureCapacity(bufferSize);
 		sceneContext.stagingBufferNormals.ensureCapacity(bufferSize);
+		sceneContext.stagingBufferParticles.ensureCapacity(bufferSize);
 		if (!skipUVs)
 			sceneContext.stagingBufferUvs.ensureCapacity(bufferSize);
 

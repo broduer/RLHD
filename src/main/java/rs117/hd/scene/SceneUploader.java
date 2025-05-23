@@ -726,6 +726,8 @@ public class SceneUploader {
 			sceneContext.stagingBufferVertices.put((float) localSeVertexX, seHeight, localSeVertexY, seColor);
 			sceneContext.stagingBufferVertices.put((float) localNwVertexX, nwHeight, localNwVertexY, nwColor);
 
+			sceneContext.stagingBufferParticles.ensureCapacity(24);
+
 			bufferLength += 6;
 
 
@@ -863,6 +865,8 @@ public class SceneUploader {
 			sceneContext.stagingBufferVertices.put((float) localSwVertexX, swHeight + swDepth, localSwVertexY, swColor);
 			sceneContext.stagingBufferVertices.put((float) localSeVertexX, seHeight + seDepth, localSeVertexY, seColor);
 			sceneContext.stagingBufferVertices.put((float) localNwVertexX, nwHeight + nwDepth, localNwVertexY, nwColor);
+
+			sceneContext.stagingBufferParticles.ensureCapacity(24);
 
 			bufferLength += 6;
 
@@ -1076,6 +1080,8 @@ public class SceneUploader {
 			sceneContext.stagingBufferVertices.put((float) localVertices[1][0], localVertices[1][2], localVertices[1][1], colorB);
 			sceneContext.stagingBufferVertices.put((float) localVertices[2][0], localVertices[2][2], localVertices[2][1], colorC);
 
+			sceneContext.stagingBufferParticles.ensureCapacity(12);
+
 			bufferLength += 3;
 
 			int[] packedMaterialData = {
@@ -1224,6 +1230,8 @@ public class SceneUploader {
 					colorC
 				);
 
+				sceneContext.stagingBufferParticles.ensureCapacity(12);
+
 				bufferLength += 3;
 
 				int packedMaterialDataA = modelPusher.packMaterialData(
@@ -1279,6 +1287,8 @@ public class SceneUploader {
 		sceneContext.stagingBufferVertices.put(fromX, swHeight, fromY, color);
 		sceneContext.stagingBufferVertices.put(toX, seHeight, fromY, color);
 		sceneContext.stagingBufferVertices.put(fromX, nwHeight, toY, color);
+
+		sceneContext.stagingBufferParticles.ensureCapacity(24);
 
 		int packedMaterialData = modelPusher.packMaterialData(Material.BLACK, -1, ModelOverride.NONE, UvType.GEOMETRY, false);
 

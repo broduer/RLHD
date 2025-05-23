@@ -404,8 +404,8 @@ public class OpenCLManager {
 		GLBuffer uniformBufferCamera,
 		int numPassthroughModels, int[] numSortingBinModels,
 		GLBuffer modelPassthroughBuffer, GLBuffer[] modelSortingBuffers,
-		GLBuffer stagingBufferVertices, GLBuffer stagingBufferUvs, GLBuffer stagingBufferNormals,
-		GLBuffer renderBufferVertices, GLBuffer renderBufferUvs, GLBuffer renderBufferNormals
+		GLBuffer stagingBufferVertices, GLBuffer stagingBufferUvs, GLBuffer stagingBufferNormals, GLBuffer stagingBufferParticles,
+		GLBuffer renderBufferVertices, GLBuffer renderBufferUvs, GLBuffer renderBufferNormals, GLBuffer renderBufferParticles
 	) {
 		try (var stack = MemoryStack.stackPush()) {
 			PointerBuffer glBuffers = stack.mallocPointer(8 + modelSortingBuffers.length)
@@ -414,9 +414,11 @@ public class OpenCLManager {
 				.put(stagingBufferVertices.clBuffer)
 				.put(stagingBufferUvs.clBuffer)
 				.put(stagingBufferNormals.clBuffer)
+				.put(stagingBufferParticles.clBuffer)
 				.put(renderBufferVertices.clBuffer)
 				.put(renderBufferUvs.clBuffer)
-				.put(renderBufferNormals.clBuffer);
+				.put(renderBufferNormals.clBuffer)
+				.put(renderBufferParticles.clBuffer);
 			for (var buffer : modelSortingBuffers)
 				glBuffers.put(buffer.clBuffer);
 			glBuffers.flip();

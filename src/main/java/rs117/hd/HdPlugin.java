@@ -127,6 +127,7 @@ import static net.runelite.api.Constants.SCENE_SIZE;
 import static net.runelite.api.Constants.*;
 import static net.runelite.api.Perspective.*;
 import static org.lwjgl.opencl.CL10.*;
+import static org.lwjgl.opengl.GL20C.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL43C.*;
 import static rs117.hd.HdPluginConfig.*;
 import static rs117.hd.scene.SceneContext.SCENE_OFFSET;
@@ -330,9 +331,11 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 	private final GLBuffer hStagingBufferVertices = new GLBuffer(); // temporary scene vertex buffer
 	private final GLBuffer hStagingBufferUvs = new GLBuffer(); // temporary scene uv buffer
 	private final GLBuffer hStagingBufferNormals = new GLBuffer(); // temporary scene normal buffer
+	private final GLBuffer hStagingBufferParticles = new GLBuffer();
 	private final GLBuffer hRenderBufferVertices = new GLBuffer(); // target vertex buffer for compute shaders
 	private final GLBuffer hRenderBufferUvs = new GLBuffer(); // target uv buffer for compute shaders
 	private final GLBuffer hRenderBufferNormals = new GLBuffer(); // target normal buffer for compute shaders
+	private final GLBuffer hRenderBufferParticles = new GLBuffer(); // temporary particle buffer
 
 	private int numPassthroughModels;
 	private GpuIntBuffer modelPassthroughBuffer;
@@ -1135,7 +1138,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		glEnableVertexAttribArray(1);
 	}
 
-	private void updateSceneVao(GLBuffer vertexBuffer, GLBuffer uvBuffer, GLBuffer normalBuffer) {
+	private void updateSceneVao(GLBuffer vertexBuffer, GLBuffer uvBuffer, GLBuffer normalBuffer, GLBuffer particleBuffer) {
 		glBindVertexArray(vaoSceneHandle);
 
 		glEnableVertexAttribArray(0);
@@ -1153,6 +1156,14 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		glEnableVertexAttribArray(3);
 		glBindBuffer(GL_ARRAY_BUFFER, normalBuffer.glBufferId);
 		glVertexAttribPointer(3, 4, GL_FLOAT, false, 0, 0);
+
+		glEnableVertexAttribArray(4);
+		glBindBuffer(GL_ARRAY_BUFFER, particleBuffer.glBufferId);
+		glVertexAttribPointer(4, 3, GL_FLOAT, false, 16, 0);
+
+		glEnableVertexAttribArray(4);
+		glBindBuffer(GL_ARRAY_BUFFER, particleBuffer.glBufferId);
+		glVertexAttribPointer(4, 1, GL_INT, false, 16, 12);
 	}
 
 	private void destroyVaos() {
@@ -1183,10 +1194,12 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		initGlBuffer(hStagingBufferVertices, GL_ARRAY_BUFFER, GL_STREAM_DRAW, CL_MEM_READ_ONLY);
 		initGlBuffer(hStagingBufferUvs, GL_ARRAY_BUFFER, GL_STREAM_DRAW, CL_MEM_READ_ONLY);
 		initGlBuffer(hStagingBufferNormals, GL_ARRAY_BUFFER, GL_STREAM_DRAW, CL_MEM_READ_ONLY);
+		initGlBuffer(hStagingBufferParticles, GL_ARRAY_BUFFER, GL_STREAM_DRAW, CL_MEM_READ_ONLY);
 
 		initGlBuffer(hRenderBufferVertices, GL_ARRAY_BUFFER, GL_STREAM_DRAW, CL_MEM_WRITE_ONLY);
 		initGlBuffer(hRenderBufferUvs, GL_ARRAY_BUFFER, GL_STREAM_DRAW, CL_MEM_WRITE_ONLY);
 		initGlBuffer(hRenderBufferNormals, GL_ARRAY_BUFFER, GL_STREAM_DRAW, CL_MEM_WRITE_ONLY);
+		initGlBuffer(hRenderBufferParticles, GL_ARRAY_BUFFER, GL_STREAM_DRAW, CL_MEM_WRITE_ONLY);
 
 		initGlBuffer(hModelPassthroughBuffer, GL_ARRAY_BUFFER, GL_STREAM_DRAW, CL_MEM_READ_ONLY);
 	}
@@ -1208,10 +1221,12 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		destroyGlBuffer(hStagingBufferVertices);
 		destroyGlBuffer(hStagingBufferUvs);
 		destroyGlBuffer(hStagingBufferNormals);
+		destroyGlBuffer(hStagingBufferParticles);
 
 		destroyGlBuffer(hRenderBufferVertices);
 		destroyGlBuffer(hRenderBufferUvs);
 		destroyGlBuffer(hRenderBufferNormals);
+		destroyGlBuffer(hRenderBufferParticles);
 
 		destroyGlBuffer(hModelPassthroughBuffer);
 
@@ -1645,6 +1660,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 			sceneContext.stagingBufferVertices.flip();
 			sceneContext.stagingBufferUvs.flip();
 			sceneContext.stagingBufferNormals.flip();
+			sceneContext.stagingBufferParticles.flip();
 			updateBuffer(
 				hStagingBufferVertices,
 				GL_ARRAY_BUFFER,
@@ -1666,9 +1682,17 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 				sceneContext.stagingBufferNormals.getBuffer(),
 				GL_STREAM_DRAW, CL_MEM_READ_ONLY
 			);
+			updateBuffer(
+				hStagingBufferParticles,
+				GL_ARRAY_BUFFER,
+				dynamicOffsetVertices * VERTEX_SIZE,
+				sceneContext.stagingBufferParticles.getBuffer(),
+				GL_STREAM_DRAW, CL_MEM_READ_ONLY
+			);
 			sceneContext.stagingBufferVertices.clear();
 			sceneContext.stagingBufferUvs.clear();
 			sceneContext.stagingBufferNormals.clear();
+			sceneContext.stagingBufferParticles.clear();
 
 			// Model buffers
 			modelPassthroughBuffer.flip();
@@ -1704,7 +1728,14 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 				GL_STREAM_DRAW,
 				CL_MEM_WRITE_ONLY
 			);
-			updateSceneVao(hRenderBufferVertices, hRenderBufferUvs, hRenderBufferNormals);
+			updateBuffer(
+				hRenderBufferParticles,
+				GL_ARRAY_BUFFER,
+				renderBufferOffset * 16L, // each vertex is an ivec4, which is 16 bytes
+				GL_STREAM_DRAW,
+				CL_MEM_WRITE_ONLY
+			);
+			updateSceneVao(hRenderBufferVertices, hRenderBufferUvs, hRenderBufferNormals, hRenderBufferParticles);
 		}
 
 		frameTimer.end(Timer.UPLOAD_GEOMETRY);
@@ -1720,8 +1751,8 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 				hUniformBufferCamera,
 				numPassthroughModels, numModelsToSort,
 				hModelPassthroughBuffer, hModelSortingBuffers,
-				hStagingBufferVertices, hStagingBufferUvs, hStagingBufferNormals,
-				hRenderBufferVertices, hRenderBufferUvs, hRenderBufferNormals
+				hStagingBufferVertices, hStagingBufferUvs, hStagingBufferNormals, hStagingBufferParticles,
+				hRenderBufferVertices, hRenderBufferUvs, hRenderBufferNormals, hRenderBufferParticles
 			);
 		} else {
 			// Compute is split into a passthrough shader for unsorted models,
@@ -1731,10 +1762,11 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, hStagingBufferVertices.glBufferId);
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, hStagingBufferUvs.glBufferId);
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, hStagingBufferNormals.glBufferId);
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, hStagingBufferParticles.glBufferId);
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, hRenderBufferVertices.glBufferId);
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, hRenderBufferUvs.glBufferId);
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, hRenderBufferNormals.glBufferId);
-
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, hRenderBufferParticles.glBufferId);
 			// unordered
 			glUseProgram(glModelPassthroughComputeProgram);
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, hModelPassthroughBuffer.glBufferId);
@@ -2507,6 +2539,7 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		sceneContext.stagingBufferVertices.flip();
 		sceneContext.stagingBufferUvs.flip();
 		sceneContext.stagingBufferNormals.flip();
+		sceneContext.stagingBufferParticles.flip();
 		updateBuffer(
 			hStagingBufferVertices,
 			GL_ARRAY_BUFFER,
@@ -2528,9 +2561,17 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 			GL_STREAM_DRAW,
 			CL_MEM_READ_ONLY
 		);
+		updateBuffer(
+			hStagingBufferParticles,
+			GL_ARRAY_BUFFER,
+			sceneContext.stagingBufferParticles.getBuffer(),
+			GL_STREAM_DRAW,
+			CL_MEM_READ_ONLY
+		);
 		sceneContext.stagingBufferVertices.clear();
 		sceneContext.stagingBufferUvs.clear();
 		sceneContext.stagingBufferNormals.clear();
+		sceneContext.stagingBufferParticles.clear();
 
 		if (sceneContext.intersects(areaManager.getArea("PLAYER_OWNED_HOUSE"))) {
 			if (!isInHouse) {
