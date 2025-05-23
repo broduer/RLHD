@@ -301,6 +301,10 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		.add(GL_VERTEX_SHADER, "vertui.glsl")
 		.add(GL_FRAGMENT_SHADER, "fragui.glsl");
 
+	private static final Shader PARTICLES = new Shader()
+		.add(GL_VERTEX_SHADER, "particles_vert.glsl")
+		.add(GL_GEOMETRY_SHADER, "particles_geom.glsl")
+		.add(GL_FRAGMENT_SHADER, "particles_frag.glsl");
 	private static final ResourcePath SHADER_PATH = Props
 		.getPathOrDefault("rlhd.shader-path", () -> path(HdPlugin.class))
 		.chroot();
@@ -1161,9 +1165,9 @@ public class HdPlugin extends Plugin implements DrawCallbacks {
 		glBindBuffer(GL_ARRAY_BUFFER, particleBuffer.glBufferId);
 		glVertexAttribPointer(4, 3, GL_FLOAT, false, 16, 0);
 
-		glEnableVertexAttribArray(4);
+		glEnableVertexAttribArray(5);
 		glBindBuffer(GL_ARRAY_BUFFER, particleBuffer.glBufferId);
-		glVertexAttribPointer(4, 1, GL_INT, false, 16, 12);
+		glVertexAttribPointer(5, 1, GL_INT, false, 16, 12);
 	}
 
 	private void destroyVaos() {
