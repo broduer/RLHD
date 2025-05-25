@@ -52,6 +52,11 @@ public class SceneContext {
 	public GpuIntBuffer stagingBufferVertices;
 	public GpuFloatBuffer stagingBufferUvs;
 	public GpuFloatBuffer stagingBufferNormals;
+	public GpuIntBuffer stagingBufferParticles;
+	public int staticGapFillerTilesOffset;
+	public int staticGapFillerTilesVertexCount;
+	public int staticCustomTilesOffset;
+	public int staticCustomTilesVertexCount;
 
 	// statistics
 	public int uniqueModels;
@@ -96,21 +101,25 @@ public class SceneContext {
 			stagingBufferVertices = new GpuIntBuffer();
 			stagingBufferUvs = new GpuFloatBuffer();
 			stagingBufferNormals = new GpuFloatBuffer();
+			stagingBufferParticles = new GpuIntBuffer();
 		} else if (reuseBuffers) {
 			// Avoid reallocating buffers whenever possible
 			staticUnorderedModelBuffer = previous.staticUnorderedModelBuffer.clear();
 			stagingBufferVertices = previous.stagingBufferVertices.clear();
 			stagingBufferUvs = previous.stagingBufferUvs.clear();
 			stagingBufferNormals = previous.stagingBufferNormals.clear();
+			stagingBufferParticles = previous.stagingBufferParticles.clear();
 			previous.staticUnorderedModelBuffer = null;
 			previous.stagingBufferVertices = null;
 			previous.stagingBufferUvs = null;
 			previous.stagingBufferNormals = null;
+			previous.stagingBufferParticles = null;
 		} else {
 			staticUnorderedModelBuffer = new GpuIntBuffer(previous.staticUnorderedModelBuffer.capacity());
 			stagingBufferVertices = new GpuIntBuffer(previous.stagingBufferVertices.capacity());
 			stagingBufferUvs = new GpuFloatBuffer(previous.stagingBufferUvs.capacity());
 			stagingBufferNormals = new GpuFloatBuffer(previous.stagingBufferNormals.capacity());
+			stagingBufferParticles = new GpuIntBuffer(previous.stagingBufferParticles.capacity());
 		}
 	}
 
@@ -130,10 +139,18 @@ public class SceneContext {
 		if (stagingBufferNormals != null)
 			stagingBufferNormals.destroy();
 		stagingBufferNormals = null;
+
+		if (stagingBufferParticles != null)
+				stagingBufferParticles.destroy();
+		stagingBufferParticles = null;
 	}
 
 	public int getVertexOffset() {
 		return stagingBufferVertices.position() / VERTEX_SIZE;
+	}
+
+	public int getParticleOffset() {
+		return stagingBufferParticles.position() / VERTEX_SIZE;
 	}
 
 	public int getUvOffset() {
@@ -199,7 +216,10 @@ public class SceneContext {
 	 * Gets the local coordinate at the south-western corner of the passed tile.
 	 */
 	public int[] worldToLocal(@Nonnull int[] worldPoint) {
-		return new int[] { (worldPoint[0] - scene.getBaseX()) * LOCAL_TILE_SIZE, (worldPoint[1] - scene.getBaseY()) * LOCAL_TILE_SIZE };
+		return new int[] {
+			(worldPoint[0] - scene.getBaseX()) * LOCAL_TILE_SIZE,
+			(worldPoint[1] - scene.getBaseY()) * LOCAL_TILE_SIZE
+		};
 	}
 
 	public boolean intersects(Area area) {

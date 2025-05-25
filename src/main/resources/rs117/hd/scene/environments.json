@@ -130,7 +130,10 @@
       190
     ],
     "fogColor": "#525e20",
-    "fogDepth": 50
+    "fogDepth": 50,
+    "groundFogStart": -150,
+    "groundFogEnd": -300,
+    "groundFogOpacity": 0.66
   },
   {
     "area": "STRONGHOLD_OF_SECURITY_DEATH",
@@ -504,7 +507,7 @@
     "fogDepth": 20
   },
   {
-    "area": "DRAYNOR_MANOR_BASEMENT",
+    "area": "DRAYNOR_MANOR_CRYPT",
     "ambientColor": "#7891b5",
     "directionalColor": "#4c78b6",
     "directionalStrength": 0,
@@ -512,7 +515,6 @@
       80,
       190
     ],
-    "fogColor": "#190d02",
     "fogDepth": 40
   },
   {
@@ -520,10 +522,12 @@
     "lightningEffects": true,
     "ambientColor": "#615c57",
     "ambientStrength": 1.5,
-    "directionalColor": "#ffbcb7",
-    "directionalStrength": 2,
+    "directionalColor": "#ffd4d1",
+    "directionalStrength": 0.1,
     "fogColor": "#0f0e0d",
-    "fogDepth": 30
+    "waterColor": "#1f2838",
+    "waterCausticsStrength": 0,
+    "fogDepth": 40
   },
   {
     "area": "MOTHERLODE_MINE",
@@ -889,6 +893,7 @@
     "area": "SOTE_FRAGMENT_OF_SEREN_ARENA",
     "allowSkyOverride": false,
     "ambientColor": "#97baff",
+    "fogColor": "#000000",
     "directionalStrength": 4,
     "fogDepth": 6.5
   },
@@ -1297,13 +1302,6 @@
     "fogDepth": 40
   },
   {
-    "area": "RANDOM_EVENT_DRILL_DEMON",
-    "ambientColor": "#97baff",
-    "directionalStrength": 4,
-    "fogColor": "#696559",
-    "fogDepth": 6.5
-  },
-  {
     "area": "RANDOM_EVENT_GRAVEDIGGER",
     "ambientColor": "#5a8cc0",
     "ambientStrength": 3,
@@ -1505,7 +1503,7 @@
     "waterColor": "#2b2b40"
   },
   {
-    "area": "ABYSS",
+    "area": "ABYSSAL_AREAS",
     "fogColor": "#100707",
     "fogDepth": 65,
     "ambientColor": "#AAAFB6",

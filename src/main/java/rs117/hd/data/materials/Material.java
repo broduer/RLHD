@@ -331,7 +331,8 @@ public enum Material {
 	GRASS_2,
 	GRASS_3,
 	GRASS_SCROLLING(GRASS_1, p -> p
-		.setScroll(0, 1 / 0.7f)),
+		.setScroll(0, -1 / 0.7f)),
+	COLORED_GRASS(p -> p.setOverrideBaseColor(true)),
 	DIRT_1_N,
 	DIRT_1(p -> p
 		.setNormalMap(DIRT_1_N)
@@ -395,6 +396,19 @@ public enum Material {
 	),
 	GRUNGE_3_LIGHT(GRUNGE_3, p -> p
 		.setBrightness(1.45f)
+	),
+	GRUNGE_3_LIGHT_SHINY(GRUNGE_3_LIGHT, p -> p
+		.setBrightness(1.45f)
+		.setSpecular(0.5f, 300)
+		),
+	GRUNGE_3_DARK(GRUNGE_3, p -> p
+		.setBrightness(0.75f)
+		.setSpecular(0f, 0)
+	),
+	WATER_FOUNTAIN_FLAT(GRUNGE_3, p -> p
+		.setFlowMap(UNDERWATER_FLOW_MAP)
+		.setFlowMapStrength(0.2f)
+		.setFlowMapDuration(new float[] { 12, -12 })
 	),
 	ROCK_1_N,
 	ROCK_1(p -> p
@@ -460,11 +474,12 @@ public enum Material {
 		.setSpecular(1, 20)
 	),
 	ROPE,
-	CARPET,
-	FINE_CARPET(CARPET, p -> p
-		.setBrightness(1.4f)
-		.setTextureScale(0.5f, 0.5f)),
-
+	CARPET_N,
+	CARPET(p -> p
+		.setNormalMap(CARPET_N)
+		.setSpecular(0.25f,30)
+	),
+	BURLAP,
 	FALADOR_PATH_BRICK_N,
 	FALADOR_PATH_BRICK(p -> p
 		.setNormalMap(FALADOR_PATH_BRICK_N)
@@ -563,9 +578,14 @@ public enum Material {
 		.setSpecular(0.3f, 30)
 	),
 	LIGHT_BARK_STONEPINE(BARK_STONEPINE, p -> p.setBrightness(1.75f)),
+	LEAF_VEINS,
+	LEAF_VEINS_LIGHT(LEAF_VEINS, p -> p.setBrightness(1.2f)),
 	WOOD_GRAIN,
 	WOOD_GRAIN_LIGHT(WOOD_GRAIN, p -> p
 		.setBrightness(1.5f)
+	),
+	WOOD_GRAIN_DARK(WOOD_GRAIN, p -> p
+		.setBrightness(0.75f)
 	),
 	WOOD_GRAIN_2_N,
 	WOOD_GRAIN_2(p -> p
